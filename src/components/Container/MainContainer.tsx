@@ -27,7 +27,7 @@ interface MainContainerProps {
 }
 
 const MainContainer: React.FC<MainContainerProps> = memo(
-  ({
+  function MainContainer({
     children,
     background,
     edges = ["top", "bottom"] as const,
@@ -39,7 +39,8 @@ const MainContainer: React.FC<MainContainerProps> = memo(
     gradientColors = ["#FAE1CF", "#FFFFFF"],
     gradientStart = { x: 0, y: 0 },
     gradientEnd = { x: 0, y: 0.4 },
-  }) => (
+  }) {
+    return (
     <View style={[styles.root, { backgroundColor: bgColor }, style]}>
       <StatusBar
         barStyle={statusBarStyle}
@@ -65,7 +66,8 @@ const MainContainer: React.FC<MainContainerProps> = memo(
         {children}
       </SafeAreaView>
     </View>
-  ),
+    );
+  },
 );
 
 export default MainContainer;

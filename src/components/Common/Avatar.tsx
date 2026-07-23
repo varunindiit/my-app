@@ -28,10 +28,8 @@ const initials = (n?: string) =>
     .join("")
     .toUpperCase();
 
-const DEFAULT_AVATAR_URI = "https://picsum.photos/200/300";
-
 const Avatar: React.FC<AvatarProps> = ({
-  uri = DEFAULT_AVATAR_URI,
+  uri,
   source,
   size = 44,
   name,

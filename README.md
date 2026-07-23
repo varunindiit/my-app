@@ -1,56 +1,54 @@
-# Welcome to your Expo app 👋
+# create-expo-starter (development repo)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This repository contains two things:
 
-## Get started
+1. **The dev app** (repo root) — a runnable Expo SDK 56 app where all template
+   code lives and is developed/tested. Run it like any Expo project.
+2. **The published CLI** — [`create-expo-starter/`](create-expo-starter/), the
+   npm package (`@varunindiit/create-expo-starter`) that scaffolds new projects
+   from a bundled copy of this app.
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+.
+├── src/                     # dev app source — the single source of truth
+├── assets/                  # app icons / splash
+├── scripts/
+│   ├── sync-template.mjs    # mirrors the dev app into the CLI template
+│   └── reset-project.js     # blank-slate helper (shipped with the template)
+└── create-expo-starter/     # the npm package
+    ├── bin/ lib/            # CLI (zero runtime dependencies)
+    └── template/            # scaffolded output — generated, do not edit by hand
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Development workflow
 
-### Other setup steps
+```bash
+npm install
+npm start                 # develop and test in the root app (i / a / w)
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+npm run sync-template     # mirror src/, assets/ and configs into the template
+cd create-expo-starter
+npm test                  # scaffold smoke test (rename, env seeding, tokens)
+```
 
-## Learn more
+**Always edit template code in the root app, then run `npm run sync-template`.**
+The sync preserves the template's `__APP_*__` identity placeholders
+(package.json name, app.json name/slug/scheme/bundle ids) and template-only
+files (`app.config.js`, `env.example`, `eas.json`, `_gitignore`, README).
 
-To learn more about developing your project with Expo, look at the following resources:
+## Testing the CLI end-to-end
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+cd create-expo-starter
+node bin/index.js my-test-app --no-install --no-git
+```
 
-## Join the community
+## Publishing
 
-Join our community of developers creating universal apps.
+Publishing is automated: create a GitHub Release whose tag matches the version
+in `create-expo-starter/package.json` (e.g. `v1.1.0`) and the
+[publish workflow](create-expo-starter/.github/workflows/publish.yml) pushes to
+npm with provenance. Bump the version, sync, smoke-test, then release.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+> Built for Expo SDK 56 — review https://docs.expo.dev/versions/v56.0.0/ before
+> changing app code or upgrading dependencies.

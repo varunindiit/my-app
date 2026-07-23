@@ -26,7 +26,7 @@ const OtpInput: React.FC<OtpInputProps> = ({
   placeholder = "",
   cellSize,
 }) => {
-  const inputs = useRef<Array<TextInput | null>>([]);
+  const inputs = useRef<(TextInput | null)[]>([]);
   const [focusIndex, setFocusIndex] = useState(autoFocus ? 0 : -1);
 
   const setCharAt = (i: number, c: string) => {

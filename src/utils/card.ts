@@ -37,9 +37,6 @@ export const brandMaxDigits = (brand: CardBrand) =>
   brand === "amex" ? 15 : 16;
 
 /** CVV length per brand (Amex = 4). */
-export const brandCvvLength = (brand: CardBrand) =>
-  brand === "amex" ? 4 : 3;
-
 /**
  * Format a card number with spaces for display / input.
  * Amex groups as 4-6-5, all others as 4-4-4-4.

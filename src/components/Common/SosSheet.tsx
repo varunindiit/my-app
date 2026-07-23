@@ -7,7 +7,6 @@ import RNText from "../Text/RNText";
 import {
   CloseIcon,
   PhoneIcon,
-  PlusIcon,
   ShieldCheckIcon,
   UserCircleIcon,
 } from "../Icon/SvgIcons";
@@ -41,7 +40,6 @@ interface SosSheetProps {
   trustedContacts?: TrustedContact[];
   /** Number dialed by the big primary CTA. Defaults to the universal 112. */
   primaryNumber?: string;
-  onAddTrustedContact?: () => void;
 }
 
 const sanitize = (number: string) => number.replace(/[^\d+]/g, "");
@@ -57,7 +55,6 @@ const SosSheet: React.FC<SosSheetProps> = ({
   services,
   trustedContacts = [],
   primaryNumber = "112",
-  onAddTrustedContact,
 }) => {
   const { t } = useLanguage();
 
@@ -205,19 +202,6 @@ const SosSheet: React.FC<SosSheetProps> = ({
         </RNText>
       )}
 
-      {/* <TouchableOpacity
-        onPress={onAddTrustedContact}
-        activeOpacity={0.8}
-        style={styles.addRow}
-      >
-        <View style={styles.addPlus}>
-          <PlusIcon size={moderateScale(15)} color={THEME.primary} />
-        </View>
-        <RNText font="semibold" size={13} color={THEME.primary}>
-          {t("sos.addTrustedContact")}
-        </RNText>
-      </TouchableOpacity> */}
-
       {/* Primary CTA */}
       <RNButton
         title={t("sos.callEmergency", { number: primaryNumber })}
@@ -322,20 +306,6 @@ const styles = StyleSheet.create({
   },
   emptyTrusted: {
     lineHeight: moderateScale(17),
-  },
-  addRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: moderateScale(12),
-  },
-  addPlus: {
-    width: moderateScale(26),
-    height: moderateScale(26),
-    borderRadius: moderateScale(13),
-    backgroundColor: THEME.primaryFaint,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: moderateScale(8),
   },
   emergencyBtn: {
     backgroundColor: THEME.danger,

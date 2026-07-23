@@ -20,7 +20,7 @@ module.exports = ({ config }) => ({
     ...(config.extra ?? {}),
     appEnv: APP_ENV,
     apiUrl:
-      process.env.API_URL ?? config.extra?.apiUrl ?? "http://13.134.217.35/api/v1",
+      process.env.API_URL ?? config.extra?.apiUrl ?? "https://api.example.com",
     googleMapsApiKey:
       process.env.GOOGLE_MAPS_API_KEY ?? config.extra?.googleMapsApiKey ?? "",
     eas: {

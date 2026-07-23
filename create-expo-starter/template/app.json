@@ -19,7 +19,6 @@
       "bundleIdentifier": "__APP_BUNDLE_ID__"
     },
     "android": {
-      "package": "__APP_BUNDLE_ID__",
       "adaptiveIcon": {
         "backgroundColor": "#E87C3E",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -28,10 +27,10 @@
       },
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "__APP_BUNDLE_ID__"
     },
     "web": {
       "output": "static",

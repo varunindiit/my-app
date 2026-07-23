@@ -1,8 +1,8 @@
 /**
- * HD WAKA — design tokens
+ * Design tokens
  * Brand: warm orange on cream/peach. Cards are white with subtle shadows.
  */
-export const COLORS = {
+export const THEME = {
   // Brand
   primary: "rgba(232, 124, 62, 1)",
   primaryDark: "rgba(196, 82, 26, 1)",
@@ -49,10 +49,6 @@ export const COLORS = {
   tabActive: "#F26B2A",
   tabInactive: "#9A9A9A",
   tabBg: "#FFFFFF",
-};
-
-export const THEME = {
-  ...COLORS,
 };
 
 export type ThemeType = typeof THEME;

@@ -1,5 +1,13 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet } from "react-native";
+import React, { useEffect } from "react";
+import { StyleSheet } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { moderateScale } from "react-native-size-matters";
 import { THEME } from "../../theme";
 import RNText from "../Text/RNText";
@@ -15,33 +23,29 @@ interface SosButtonProps {
  * target. A subtle "breathing" pulse keeps it noticeable without being loud.
  */
 const SosButton: React.FC<SosButtonProps> = ({ size = moderateScale(30) }) => {
-  const pulse = useRef(new Animated.Value(0)).current;
+  const pulse = useSharedValue(1);
 
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 900,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0,
-          duration: 900,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]),
+    pulse.set(
+      withRepeat(
+        withSequence(
+          withTiming(1.07, {
+            duration: 900,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          withTiming(1, {
+            duration: 900,
+            easing: Easing.inOut(Easing.ease),
+          }),
+        ),
+        -1,
+      ),
     );
-    loop.start();
-    return () => loop.stop();
   }, [pulse]);
 
-  const scale = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.07],
-  });
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.get() }],
+  }));
 
   return (
     <Animated.View
@@ -51,8 +55,8 @@ const SosButton: React.FC<SosButtonProps> = ({ size = moderateScale(30) }) => {
           width: size,
           height: size,
           borderRadius: size / 2,
-          transform: [{ scale }],
         },
+        pulseStyle,
       ]}
     >
       <RNText font="bold" size={9} color={THEME.textOnPrimary} letterSpacing={0.5}>

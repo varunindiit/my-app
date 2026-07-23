@@ -1,5 +1,4 @@
 import React from "react";
-import type { TFunction } from "i18next";
 import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
 import { moderateScale } from "react-native-size-matters";
 import Avatar from "./Avatar";
@@ -9,45 +8,14 @@ import RNText from "../Text/RNText";
 import { CheckCircleIcon } from "../Icon/SvgIcons";
 import { THEME } from "../../theme";
 import { useLanguage } from "../../localization";
-import { Trip, TripStatus } from "../../redux/slice/trip";
+import { Trip } from "../../redux/slice/trip";
+import { TRIP_STATUS_TONE, tripStatusLabel } from "../../utils/trip";
 
 interface TripCardProps {
   trip: Trip;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }
-
-const STATUS_TONE: Record<
-  TripStatus,
-  "success" | "warning" | "danger" | "info" | "primary"
-> = {
-  available: "info",
-  fully_booked: "warning",
-  confirmed: "success",
-  in_progress: "primary",
-  completed: "success",
-  cancelled: "danger",
-};
-
-/** Localized status label, falling back to the English literal where no key exists. */
-const statusLabel = (t: TFunction, status: TripStatus): string => {
-  switch (status) {
-    case "confirmed":
-      return t("tripStatus.confirmed");
-    case "completed":
-      return t("tripStatus.completed");
-    case "cancelled":
-      return t("tripStatus.cancelled");
-    case "available":
-      return t("tripStatus.available");
-    case "fully_booked":
-      return t("tripStatus.fullyBooked");
-    case "in_progress":
-      return t("tripStatus.inProgress");
-    default:
-      return status;
-  }
-};
 
 const TripCard: React.FC<TripCardProps> = ({ trip, onPress, style }) => {
   const { t } = useLanguage();
@@ -92,13 +60,13 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, style }) => {
               color={THEME.success}
               style={styles.confirmedLabel}
             >
-              {statusLabel(t, trip.status)}
+              {tripStatusLabel(t, trip.status)}
             </RNText>
           </View>
         ) : (
           <StatusBadge
-            label={statusLabel(t, trip.status)}
-            tone={STATUS_TONE[trip.status]}
+            label={tripStatusLabel(t, trip.status)}
+            tone={TRIP_STATUS_TONE[trip.status]}
           />
         )}
       </View>
@@ -157,7 +125,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, style }) => {
           {trip.date}, {trip.weekday}
         </RNText>
         <RNText font="semibold" size={15} color={THEME.text}>
-          {t('common.seatCount', { count: 1 })}
+          {t("common.seatCount", { count: 1 })}
         </RNText>
       </View>
     </Card>

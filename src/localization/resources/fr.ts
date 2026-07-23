@@ -6,7 +6,7 @@ import type { TranslationSchema } from "./en";
 
 const fr: TranslationSchema = {
   common: {
-    appName: "HD WAKA",
+    appName: "My App",
     continue: "Continuer",
     next: "Suivant",
     back: "Retour",
@@ -570,7 +570,7 @@ const fr: TranslationSchema = {
     termsConditions: "Conditions générales",
     helpSupport: "Aide et assistance",
     logOut: "Se déconnecter",
-    logOutConfirm: "Êtes-vous sûr de vouloir vous déconnecter de HD WAKA ?",
+    logOutConfirm: "Êtes-vous sûr de vouloir vous déconnecter ?",
     verifiedDriver: "Conducteur vérifié",
     verifyGovtId: "Vérifiez votre pièce d'identité",
     govtIdVerified: "Pièce d'identité vérifiée",

@@ -36,7 +36,7 @@ class Config {
     this.coreAPI =
       process.env.EXPO_PUBLIC_API_URL ??
       extra.apiUrl ??
-      "http://13.134.217.35/api/v1";
+      "https://api.example.com";
 
     this.googleMapsKey =
       process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ??

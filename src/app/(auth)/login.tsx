@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useDispatch } from "react-redux";
 import { setIsLoggedIn } from "../../redux/slice/auth";
 import { storage } from "../../services/storage";
+import { THEME } from "../../theme";
 import { IS_LOGGED_IN } from "../../utils/constants";
 
 const Login = () => {
@@ -40,13 +41,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   button: {
-    backgroundColor: "#E87C3E",
+    backgroundColor: THEME.primary,
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 999,
   },
   buttonText: {
-    color: "#FFFFFF",
+    color: THEME.textOnPrimary,
     fontSize: 15,
     fontWeight: "600",
   },

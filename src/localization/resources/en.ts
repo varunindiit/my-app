@@ -5,7 +5,7 @@
  */
 const en = {
   common: {
-    appName: "HD WAKA",
+    appName: "My App",
     continue: "Continue",
     next: "Next",
     back: "Back",
@@ -569,7 +569,7 @@ const en = {
     termsConditions: "Terms & Conditions",
     helpSupport: "Help & Support",
     logOut: "Log Out",
-    logOutConfirm: "Are you sure you want to log out from HD WAKA?",
+    logOutConfirm: "Are you sure you want to log out?",
     verifiedDriver: "Verified Driver",
     verifyGovtId: "Verify your Govt. ID",
     govtIdVerified: "Govt. ID Verified",

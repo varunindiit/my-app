@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
-import { StatusBar, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -64,11 +65,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <Provider store={store}>
           <KeyboardProvider>
-            <StatusBar
-              backgroundColor="transparent"
-              barStyle="dark-content"
-              translucent
-            />
+            <StatusBar style="dark" />
             <RootNavigator />
             <FlashMessage position="top" duration={1500} />
           </KeyboardProvider>

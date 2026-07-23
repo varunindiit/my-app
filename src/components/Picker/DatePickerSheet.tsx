@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
-  Layout,
+  LinearTransition,
 } from "react-native-reanimated";
 import { moderateScale } from "react-native-size-matters";
 import { SPACING, THEME } from "../../theme";
@@ -95,14 +95,18 @@ const DatePickerSheet: React.FC<DatePickerSheetProps> = ({
   const [viewMonth, setViewMonth] = useState<number>(initial.getMonth());
   const [viewYear, setViewYear] = useState<number>(initial.getFullYear());
 
-  useEffect(() => {
+  // Re-seed the calendar from `value` each time the sheet opens. Adjusting
+  // state during render (instead of in an effect) avoids a cascading re-render.
+  const [prevVisible, setPrevVisible] = useState(visible);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
     if (visible) {
       const start = value ? startOfDay(value) : today;
       setSelected(start);
       setViewMonth(start.getMonth());
       setViewYear(start.getFullYear());
     }
-  }, [visible, value, today]);
+  }
 
   const cells = useMemo(
     () => buildCalendar(viewYear, viewMonth),
@@ -230,7 +234,7 @@ const DatePickerSheet: React.FC<DatePickerSheetProps> = ({
       <Animated.View
         key={`grid-${viewMonth}-${viewYear}`}
         entering={FadeIn.duration(160)}
-        layout={Layout.duration(140)}
+        layout={LinearTransition.duration(140)}
         style={styles.grid}
       >
         {cells.map((date, idx) => {

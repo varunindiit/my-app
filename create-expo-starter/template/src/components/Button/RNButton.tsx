@@ -83,14 +83,14 @@ const RNButton: React.FC<RNButtonProps> = ({
 }) => {
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.get() }],
   }));
 
   const onPressIn = useCallback(() => {
-    scale.value = withSpring(0.97, { damping: 18, stiffness: 220 });
+    scale.set(withSpring(0.97, { damping: 18, stiffness: 220 }));
   }, [scale]);
   const onPressOut = useCallback(() => {
-    scale.value = withSpring(1, { damping: 18, stiffness: 220 });
+    scale.set(withSpring(1, { damping: 18, stiffness: 220 }));
   }, [scale]);
 
   const v = VARIANT_STYLES[variant];

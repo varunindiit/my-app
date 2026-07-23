@@ -70,7 +70,7 @@ const BottomSheetAlert: React.FC<BottomSheetAlertProps> = ({
         <RNButton
           title={confirmText}
           containerStyle={styles.btn}
-          variant={destructive ? "primary" : "primary"}
+          variant={destructive ? "danger" : "primary"}
           onPress={onConfirm}
           loading={loading}
         />

@@ -22,7 +22,6 @@ export type {
   TrustedContact,
 } from "./Common/SosSheet";
 export { default as Avatar } from "./Common/Avatar";
-export { default as StarRating } from "./Common/StarRating";
 export { default as RatingStars } from "./Common/RatingStars";
 export { default as Toggle } from "./Common/Toggle";
 export { default as Checkbox } from "./Common/Checkbox";

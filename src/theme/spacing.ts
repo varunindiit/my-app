@@ -1,9 +1,4 @@
-import { Dimensions } from "react-native";
 import { moderateScale, scale, verticalScale } from "react-native-size-matters";
-
-const { width, height } = Dimensions.get("window");
-
-export const SCREEN = { width, height };
 
 /** Margin / padding scale */
 export const SPACING = {

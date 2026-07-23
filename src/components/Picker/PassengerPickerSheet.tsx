@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -44,9 +44,13 @@ const PassengerPickerSheet: React.FC<PassengerPickerSheetProps> = ({
   const subtitleText = subtitle ?? t("home.passengersSubtitle");
   const [count, setCount] = useState<number>(value);
 
-  useEffect(() => {
+  // Re-seed the stepper from `value` each time the sheet opens. Adjusting
+  // state during render (instead of in an effect) avoids a cascading re-render.
+  const [prevVisible, setPrevVisible] = useState(visible);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
     if (visible) setCount(value);
-  }, [visible, value]);
+  }
 
   const decrement = () => {
     if (count <= min) return;
@@ -155,7 +159,7 @@ const StepperButton = ({
 }) => {
   const scale = useSharedValue(1);
   const style = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.get() }],
   }));
 
   return (
@@ -164,10 +168,10 @@ const StepperButton = ({
       disabled={disabled}
       onPressIn={() => {
         if (disabled) return;
-        scale.value = withSpring(0.9, { mass: 0.3, damping: 12 });
+        scale.set(withSpring(0.9, { mass: 0.3, damping: 12 }));
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, { mass: 0.3, damping: 12 });
+        scale.set(withSpring(1, { mass: 0.3, damping: 12 }));
       }}
       style={[
         styles.stepBtn,

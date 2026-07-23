@@ -4,15 +4,15 @@ import { moderateScale } from "react-native-size-matters";
 import { SPACING, THEME } from "../../theme";
 import RNText from "../Text/RNText";
 
-type Tone = "success" | "warning" | "danger" | "info" | "primary";
+export type StatusTone = "success" | "warning" | "danger" | "info" | "primary";
 
 interface StatusBadgeProps {
   label: string;
-  tone?: Tone;
+  tone?: StatusTone;
   dot?: boolean;
 }
 
-const PALETTE: Record<Tone, { bg: string; fg: string }> = {
+const PALETTE: Record<StatusTone, { bg: string; fg: string }> = {
   success: { bg: THEME.successLight, fg: THEME.success },
   warning: { bg: THEME.warningLight, fg: THEME.warning },
   danger: { bg: THEME.dangerLight, fg: THEME.danger },

@@ -28,7 +28,6 @@ src/
 ├── localization/        # i18next setup + en/fr resources
 ├── hooks/               # shared hooks (useCurrentLocation, …)
 ├── utils/               # constants + helper functions
-├── types/               # shared TypeScript types
 └── assets/              # fonts, images, svg icons (SVG-as-component support)
 ```
 
