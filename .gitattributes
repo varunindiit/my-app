@@ -1,0 +1,26 @@
+# Normalise line endings in the repository.
+#
+# Without this, a Windows checkout (core.autocrlf=true, the default) rewrites
+# every text file to CRLF. The scaffolder handles CRLF input correctly, but
+# keeping the committed template LF-only means the tarball published to npm is
+# byte-identical regardless of which machine ran the release.
+* text=auto eol=lf
+
+# Binary assets must never be touched.
+*.ttf   binary
+*.otf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+
+# SVGs are text, but they are consumed as components — keep them LF.
+*.svg   text eol=lf
+
+# Generated; keep diffs out of review and out of language statistics.
+create-expo-starter/template/** linguist-generated=true
+package-lock.json              linguist-generated=true
+create-expo-starter/template/_package-lock.json linguist-generated=true

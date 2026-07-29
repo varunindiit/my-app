@@ -57,7 +57,13 @@ function stripFeatureMarkers(content, features, filePathForErrors = "<unknown>")
   // a stray `#endif` with no `#if` is exactly the corruption worth reporting.
   if (!/#(?:if|else|endif)\b/.test(content)) return content;
 
-  const lines = content.split("\n");
+  // Git checkouts on Windows use CRLF. Splitting on "\n" alone leaves a
+  // trailing "\r" on every line, which the marker pattern's `$` anchor cannot
+  // match — so markers silently survived and their blocks were never pruned.
+  // Normalise for matching, then rejoin with the file's original terminator so
+  // the scaffold doesn't get its line endings rewritten as a side effect.
+  const eol = content.includes("\r\n") ? "\r\n" : "\n";
+  const lines = content.split(/\r?\n/);
   const out = [];
   /** @type {{feature: string, keep: boolean, inElse: boolean}[]} */
   const stack = [];
@@ -98,15 +104,19 @@ function stripFeatureMarkers(content, features, filePathForErrors = "<unknown>")
     );
   }
 
-  return out.join("\n");
+  return out.join(eol);
 }
 
 /**
  * Collapse the runs of blank lines that marker removal leaves behind, so the
  * generated file looks hand-written rather than machine-gutted.
+ *
+ * Matches `\r?\n` rather than `\n` so it works on CRLF files too — with a bare
+ * `\n{3,}` this was a silent no-op on Windows.
  */
 function tidyBlankLines(content) {
-  return content.replace(/\n{3,}/g, "\n\n");
+  const eol = content.includes("\r\n") ? "\r\n" : "\n";
+  return content.replace(/(?:\r?\n){3,}/g, eol + eol);
 }
 
 module.exports = {

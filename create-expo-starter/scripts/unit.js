@@ -21,6 +21,7 @@ const {
   escapeForJson,
   applyTokens,
   stripFeatureMarkers,
+  tidyBlankLines,
 } = require("../lib/transform");
 const { resolveFeatures, matchingPreset, PRESETS } = require("../lib/features");
 const { isNewer } = require("../lib/version-check");
@@ -166,6 +167,52 @@ test("stripFeatureMarkers throws on unbalanced blocks", () => {
 test("stripFeatureMarkers leaves marker-free content untouched", () => {
   const src = "const x = 1;\n// a normal comment\n";
   assert.equal(stripFeatureMarkers(src, {}), src);
+});
+
+// Regression: git checks out CRLF on Windows. Splitting on "\n" left a
+// trailing "\r" that the marker pattern's `$` anchor could not match, so JSX
+// markers survived and their blocks were never pruned. Line-comment markers
+// happened to still work (the `\s*` after the feature name ate the `\r`),
+// which is why this only ever broke two files — and only on Windows.
+test("stripFeatureMarkers handles CRLF line endings", () => {
+  const crlf = ["before", "// #if gallery", "dropped", "// #endif", "after"].join(
+    "\r\n",
+  );
+  assert.equal(stripFeatureMarkers(crlf, { gallery: false }), "before\r\nafter");
+  assert.equal(
+    stripFeatureMarkers(crlf, { gallery: true }),
+    "before\r\ndropped\r\nafter",
+  );
+});
+
+test("stripFeatureMarkers handles CRLF JSX markers", () => {
+  const crlf = [
+    "<A />",
+    "      {/* #if gallery */}",
+    "      <B />",
+    "      {/* #endif */}",
+    "<C />",
+  ].join("\r\n");
+
+  assert.equal(stripFeatureMarkers(crlf, { gallery: false }), "<A />\r\n<C />");
+  assert.equal(
+    stripFeatureMarkers(crlf, { gallery: true }),
+    "<A />\r\n      <B />\r\n<C />",
+  );
+});
+
+test("stripFeatureMarkers preserves the file's line-ending style", () => {
+  const crlf = "// #if a\r\nkept\r\n// #endif\r\n";
+  const result = stripFeatureMarkers(crlf, { a: true });
+  assert.ok(!/[^\r]\n/.test(result), "no bare LF introduced into a CRLF file");
+
+  const lf = "// #if a\nkept\n// #endif\n";
+  assert.ok(!stripFeatureMarkers(lf, { a: true }).includes("\r"), "no CR added to an LF file");
+});
+
+test("tidyBlankLines collapses runs on both line-ending styles", () => {
+  assert.equal(tidyBlankLines("a\n\n\n\nb"), "a\n\nb");
+  assert.equal(tidyBlankLines("a\r\n\r\n\r\n\r\nb"), "a\r\n\r\nb");
 });
 
 // ── presets ─────────────────────────────────────────────────────────────────
