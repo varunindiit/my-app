@@ -8,7 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import { moderateScale } from "react-native-size-matters";
-import { THEME } from "../../theme";
+import { useTheme } from "@/theme";
 
 /** Five-pointed star outline path on a 24x24 grid. */
 const STAR_PATH =
@@ -82,31 +82,40 @@ interface RatingStarsProps {
 
 /**
  * Animated, tappable star rating. Each star "pops" with a spring when selected,
- * keeping the rating interaction smooth and premium. Reusable across the app.
+ * keeping the rating interaction smooth. Reusable across the app.
  */
 const RatingStars: React.FC<RatingStarsProps> = ({
   rating,
   onChange,
   count = 5,
   size = moderateScale(34),
-  color = THEME.primary,
-  emptyColor = THEME.primaryLight,
+  color,
+  emptyColor,
   disabled,
-}) => (
-  <View style={styles.row}>
-    {Array.from({ length: count }).map((_, i) => (
-      <Star
-        key={i}
-        filled={i < rating}
-        size={size}
-        color={color}
-        emptyColor={emptyColor}
-        disabled={disabled || !onChange}
-        onPress={() => onChange?.(i + 1)}
-      />
-    ))}
-  </View>
-);
+}) => {
+  const { colors } = useTheme();
+  const readOnly = disabled || !onChange;
+
+  return (
+    <View
+      style={styles.row}
+      accessibilityRole={readOnly ? "text" : "adjustable"}
+      accessibilityLabel={`Rating: ${rating} out of ${count}`}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <Star
+          key={i}
+          filled={i < rating}
+          size={size}
+          color={color ?? colors.star}
+          emptyColor={emptyColor ?? colors.unselectedStar}
+          disabled={readOnly}
+          onPress={() => onChange?.(i + 1)}
+        />
+      ))}
+    </View>
+  );
+};
 
 export default RatingStars;
 

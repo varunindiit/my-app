@@ -1,54 +1,17 @@
 /**
- * Design tokens
- * Brand: warm orange on cream/peach. Cards are white with subtle shadows.
+ * Design tokens.
+ *
+ * `THEME` is the *light* palette exposed as a plain object. It exists so
+ * non-reactive call sites (module-scope constants, utilities outside the React
+ * tree, tests) still have something to read.
+ *
+ * Anything rendered on screen should use `useThemeColors()` / `makeStyles()`
+ * from `@/theme/useTheme` instead, so it follows the device appearance.
+ * Palettes and their types live in `./palette`.
  */
-export const THEME = {
-  // Brand
-  primary: "rgba(232, 124, 62, 1)",
-  primaryDark: "rgba(196, 82, 26, 1)",
-  primaryLight: "#FCE4D2",
-  primaryFaint: "#FFF3EA",
+import { light, type ThemeColors } from "./palette";
 
-  // Backgrounds
-  background: "#FBE9D6",
-  backgroundAlt: "#FFF6EC",
-  surface: "rgba(255, 251, 249, 1)",
-  surfaceMuted: "#FAF7F4",
-  overlay: "rgba(0,0,0,0.45)",
-  labelBrown: "rgba(122, 90, 58, 1)",
+export const THEME = light;
 
-  // Text
-  text: "rgba(44, 26, 14, 1)",
-  textSecondary: "#5C5C5C",
-  textMuted: "#9A9A9A",
-  textPlaceholder: "#BDBDBD",
-  textOnPrimary: "#FFFFFF",
-
-  // Borders / Lines
-  border: "#F2DDC8",
-  divider: "#F0EAE3",
-  inputBorder: "#EADFD2",
-
-  // Status
-  success: "#1FA971",
-  successLight: "#E7F8F0",
-  warning: "#F4B400",
-  warningLight: "#FFF6DA",
-  danger: "#E5484D",
-  dangerLight: "#FDECEC",
-  info: "#2D7FF9",
-
-  // Misc
-  star: "#F4B400",
-  unselectedStar: "#E5DAC9",
-  shadow: "rgba(28, 22, 14, 0.10)",
-  greenDot: "#1FA971",
-  redDot: "#E5484D",
-
-  // Tab bar
-  tabActive: "#F26B2A",
-  tabInactive: "#9A9A9A",
-  tabBg: "#FFFFFF",
-};
-
-export type ThemeType = typeof THEME;
+/** @deprecated Use `ThemeColors` from `./palette`. */
+export type ThemeType = ThemeColors;

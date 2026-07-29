@@ -31,7 +31,16 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+# Ignore every .env variant, then re-allow the committed examples. The previous
+# `.env*.local` pattern left a real `.env` — the file that actually holds keys —
+# fully committable.
+.env
+.env.*
+!.env.example
+!env.example
+
+# test output
+coverage/
 
 # typescript
 *.tsbuildinfo

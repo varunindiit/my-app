@@ -43,30 +43,66 @@ function toScheme(input) {
   return s || "app";
 }
 
-/** Human display name — preserves user's spacing/casing, falls back gracefully. */
+/** Human display name — preserves the user's spacing and casing. */
 function toDisplayName(input) {
-  const s = String(input).trim();
+  const s = String(input).trim().replace(/\s+/g, " ");
   return s || "My App";
 }
 
-/** Default reverse-DNS bundle identifier from a slug. */
+/**
+ * Validate a display name.
+ *
+ * The value is interpolated into app.json (JSON-escaped) and into the LICENSE,
+ * so control characters and quote-adjacent trickery are rejected up front
+ * rather than relied on to escape cleanly. Emoji and accented letters are fine.
+ */
+function isValidDisplayName(name) {
+  const s = String(name);
+  if (!s.trim()) return false;
+  if (s.length > 100) return false;
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001F\u007F]/.test(s)) return false;
+  if (/["\\<>]/.test(s)) return false;
+  return true;
+}
+
+/**
+ * Default reverse-DNS bundle identifier from a slug.
+ *
+ * The final segment is prefixed when it would otherwise start with a digit:
+ * Android package segments are Java identifiers, so `com.example.123` is
+ * rejected by the native build long after scaffolding.
+ */
 function defaultBundleId(slug) {
-  const tail = slug.replace(/-/g, "").replace(/[^a-z0-9]/g, "") || "app";
+  let tail = String(slug).replace(/[^a-z0-9]/gi, "").toLowerCase();
+  if (!tail) tail = "app";
+  if (/^[0-9]/.test(tail)) tail = `app${tail}`;
   return `com.example.${tail}`;
 }
 
-/** Validate a reverse-DNS identifier (com.foo.bar). */
+/**
+ * Validate a reverse-DNS identifier (com.foo.bar).
+ *
+ * Each segment must start with a letter: Android package segments are Java
+ * identifiers, so `com.1foo.bar` produces a build failure much later, at native
+ * compile time, with a far less obvious message.
+ */
 function isValidBundleId(id) {
-  return /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/.test(id);
+  return /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/.test(String(id));
 }
 
 /** Validate a project/slug name. */
 function isValidSlug(slug) {
-  return /^[a-z0-9][a-z0-9-]*$/.test(slug) && slug.length <= 214;
+  return /^[a-z0-9][a-z0-9-]*$/.test(String(slug)) && String(slug).length <= 214;
 }
 
 function resolveTarget(cwd, slug) {
   return path.resolve(cwd, slug);
+}
+
+/** Current year, for the generated LICENSE. */
+function currentYear() {
+  return String(new Date().getFullYear());
 }
 
 module.exports = {
@@ -79,8 +115,10 @@ module.exports = {
   toSlug,
   toScheme,
   toDisplayName,
+  isValidDisplayName,
   defaultBundleId,
   isValidBundleId,
   isValidSlug,
   resolveTarget,
+  currentYear,
 };

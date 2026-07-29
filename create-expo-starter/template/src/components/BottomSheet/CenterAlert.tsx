@@ -1,18 +1,17 @@
-import React from 'react';
+import React from "react";
 import {
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
-  StyleSheet,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { moderateScale } from 'react-native-size-matters';
-import { SPACING, THEME } from '../../theme';
-import { RNButton } from '../Button';
-import RNText from '../Text/RNText';
-import { CloseIcon } from '../Icon/SvgIcons';
+} from "react-native";
+import { moderateScale } from "react-native-size-matters";
+import { SPACING, makeStyles, useTheme } from "@/theme";
+import { RNButton } from "../Button";
+import RNText from "../Text/RNText";
+import { CloseIcon } from "../Icon/SvgIcons";
 
 interface CenterAlertProps {
   visible: boolean;
@@ -31,96 +30,111 @@ const CenterAlert: React.FC<CenterAlertProps> = ({
   onClose,
   title,
   description,
-  confirmText = 'Yes, Cancel',
+  confirmText = "Confirm",
   onConfirm,
   loading,
   confirmDisabled,
   children,
-}) => (
-  <Modal
-    visible={visible}
-    transparent
-    animationType="fade"
-    statusBarTranslucent
-    // onRequestClose={onClose}
-  >
-    <KeyboardAvoidingView
-      style={styles.flex1}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+}) => {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      // Android hardware back must dismiss the dialog, otherwise it traps the user.
+      onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.card} onPress={() => {}}>
-          <TouchableOpacity
-            style={styles.closeBtn}
-            onPress={onClose}
-            hitSlop={10}
-            activeOpacity={0.7}
+      <KeyboardAvoidingView
+        style={styles.flex1}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <Pressable style={styles.backdrop} onPress={onClose}>
+          <Pressable
+            style={styles.card}
+            onPress={() => {}}
+            accessibilityViewIsModal
           >
-            <View style={styles.closeCircle}>
-              <CloseIcon size={moderateScale(12)} color="#FFFFFF" />
-            </View>
-          </TouchableOpacity>
-
-          <RNText
-            font="semibold"
-            size={18}
-            color={THEME.text}
-            textAlign="center"
-            style={styles.title}
-          >
-            {title}
-          </RNText>
-
-          {description ? (
-            <RNText
-              size={13}
-              color={THEME.textSecondary}
-              textAlign="center"
-              style={styles.description}
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={onClose}
+              hitSlop={10}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
             >
-              {description}
+              <View style={styles.closeCircle}>
+                <CloseIcon
+                  size={moderateScale(12)}
+                  color={colors.textOnPrimary}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <RNText
+              font="semibold"
+              size={18}
+              color={colors.text}
+              textAlign="center"
+              style={styles.title}
+            >
+              {title}
             </RNText>
-          ) : null}
 
-          {children ? <View style={styles.content}>{children}</View> : null}
+            {description ? (
+              <RNText
+                size={13}
+                color={colors.textSecondary}
+                textAlign="center"
+                style={styles.description}
+              >
+                {description}
+              </RNText>
+            ) : null}
 
-          <RNButton
-            title={confirmText}
-            onPress={onConfirm}
-            loading={loading}
-            disabled={confirmDisabled}
-            containerStyle={styles.btn}
-          />
+            {children ? <View style={styles.content}>{children}</View> : null}
+
+            <RNButton
+              title={confirmText}
+              onPress={onConfirm}
+              loading={loading}
+              disabled={confirmDisabled}
+              containerStyle={styles.btn}
+            />
+          </Pressable>
         </Pressable>
-      </Pressable>
-    </KeyboardAvoidingView>
-  </Modal>
-);
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+};
 
 export default CenterAlert;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   flex1: {
     flex: 1,
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: c.overlay,
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: moderateScale(36),
   },
   card: {
-    width: '100%',
-    backgroundColor: THEME.surface,
+    width: "100%",
+    backgroundColor: c.surface,
     borderRadius: moderateScale(20),
     paddingHorizontal: moderateScale(20),
     paddingTop: moderateScale(28),
     paddingBottom: moderateScale(20),
-    alignItems: 'center',
+    alignItems: "center",
   },
   closeBtn: {
-    position: 'absolute',
+    position: "absolute",
     top: moderateScale(10),
     right: moderateScale(10),
     padding: moderateScale(4),
@@ -129,9 +143,9 @@ const styles = StyleSheet.create({
     width: moderateScale(20),
     height: moderateScale(20),
     borderRadius: moderateScale(10),
-    backgroundColor: THEME.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: c.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     marginTop: moderateScale(2),
@@ -142,12 +156,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(4),
   },
   content: {
-    width: '100%',
+    width: "100%",
     marginTop: moderateScale(16),
   },
   btn: {
     marginTop: moderateScale(20),
-    width: '100%',
+    width: "100%",
     borderRadius: SPACING.radiusPill,
   },
-});
+}));

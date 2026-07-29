@@ -1,8 +1,8 @@
 import React from "react";
-import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { StyleProp, View, ViewStyle } from "react-native";
 import { Modal } from "react-native-reanimated-modal";
 import { moderateScale } from "react-native-size-matters";
-import { SPACING, THEME } from "../../theme";
+import { SPACING, makeStyles, useTheme } from "@/theme";
 
 interface BottomSheetProps {
   visible: boolean;
@@ -24,38 +24,45 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
   showHandle = true,
   animationInTiming = 280,
   backdropOpacity = 0.5,
-}) => (
-  <Modal
-    visible={visible}
-    statusBarTranslucent
-    style={styles.modal}
-    animation={{ type: "slide", duration: animationInTiming }}
-    backdrop={{
-      enabled: true,
-      color: "#000000",
-      opacity: backdropOpacity,
-    }}
-    swipe={{ directions: ["down"], threshold: 150 }}
-    onBackdropPress={dismissOnBackdropPress ? onClose : false}
-    onHide={onClose}
-  >
-    <View style={[styles.sheet, contentStyle]}>
-      {showHandle && <View style={styles.handle} />}
-      {children}
-    </View>
-  </Modal>
-);
+}) => {
+  const styles = useStyles();
+  const { isDark } = useTheme();
+
+  return (
+    <Modal
+      visible={visible}
+      statusBarTranslucent
+      style={styles.modal}
+      animation={{ type: "slide", duration: animationInTiming }}
+      backdrop={{
+        enabled: true,
+        color: "#000000",
+        // A 50% scrim over an already-dark background reads as muddy rather
+        // than dimmed, so lean harder on it in dark mode.
+        opacity: isDark ? Math.min(backdropOpacity + 0.2, 0.85) : backdropOpacity,
+      }}
+      swipe={{ directions: ["down"], threshold: 150 }}
+      onBackdropPress={dismissOnBackdropPress ? onClose : false}
+      onHide={onClose}
+    >
+      <View style={[styles.sheet, contentStyle]}>
+        {showHandle && <View style={styles.handle} />}
+        {children}
+      </View>
+    </Modal>
+  );
+};
 
 export default BottomSheet;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   modal: {
     justifyContent: "flex-end",
     margin: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: c.overlay,
   },
   sheet: {
-    backgroundColor: THEME.surface,
+    backgroundColor: c.surface,
     paddingHorizontal: SPACING.xl,
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.xxxl,
@@ -66,8 +73,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: moderateScale(40),
     height: moderateScale(4),
-    backgroundColor: THEME.border,
+    backgroundColor: c.border,
     borderRadius: moderateScale(2),
     marginBottom: SPACING.lg,
   },
-});
+}));

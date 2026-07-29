@@ -7,7 +7,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { THEME } from "../../theme";
+import { useTheme } from "@/theme";
 import RNText from "../Text/RNText";
 
 interface AvatarProps {
@@ -36,34 +36,40 @@ const Avatar: React.FC<AvatarProps> = ({
   style,
   ring,
 }) => {
+  const { colors } = useTheme();
   const radius = size / 2;
   const wrap = [
     {
       width: size,
       height: size,
       borderRadius: radius,
-      backgroundColor: THEME.primaryLight,
+      backgroundColor: colors.primaryLight,
     },
-    ring && { borderWidth: 2, borderColor: THEME.surface },
+    ring && { borderWidth: 2, borderColor: colors.surface },
     styles.center,
     style,
   ];
+
   if (uri || source) {
     return (
       <View style={wrap}>
         <Image
           source={source ?? { uri }}
           style={{ width: size, height: size, borderRadius: radius }}
+          accessibilityIgnoresInvertColors
+          accessible={Boolean(name)}
+          accessibilityLabel={name ? `${name}'s avatar` : undefined}
         />
       </View>
     );
   }
+
   return (
     <View style={wrap}>
       <RNText
         font="semibold"
         size={Math.round(size * 0.36)}
-        color={THEME.primary}
+        color={colors.primary}
       >
         {initials(name) || "U"}
       </RNText>

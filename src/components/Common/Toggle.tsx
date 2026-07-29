@@ -7,15 +7,23 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { moderateScale } from "react-native-size-matters";
-import { THEME } from "../../theme";
+import { useTheme } from "@/theme";
 
 interface ToggleProps {
   value: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  /** Announced by screen readers in place of the surrounding label. */
+  accessibilityLabel?: string;
 }
 
-const Toggle: React.FC<ToggleProps> = ({ value, onChange, disabled }) => {
+const Toggle: React.FC<ToggleProps> = ({
+  value,
+  onChange,
+  disabled,
+  accessibilityLabel,
+}) => {
+  const { colors } = useTheme();
   const tx = useSharedValue(value ? moderateScale(22) : 0);
 
   useEffect(() => {
@@ -34,15 +42,20 @@ const Toggle: React.FC<ToggleProps> = ({ value, onChange, disabled }) => {
       disabled={disabled}
       onPress={() => onChange(!value)}
       hitSlop={6}
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ checked: value, disabled: Boolean(disabled) }}
       style={[
         styles.track,
         {
-          backgroundColor: value ? THEME.primary : "#E2D7CB",
+          backgroundColor: value ? colors.primary : colors.inputBorder,
           opacity: disabled ? 0.4 : 1,
         },
       ]}
     >
-      <Animated.View style={[styles.thumb, thumb]} />
+      <Animated.View
+        style={[styles.thumb, { backgroundColor: colors.tabBg }, thumb]}
+      />
     </Pressable>
   );
 };
@@ -61,6 +74,5 @@ const styles = StyleSheet.create({
     width: moderateScale(20),
     height: moderateScale(20),
     borderRadius: moderateScale(11),
-    backgroundColor: "#FFFFFF",
   },
 });

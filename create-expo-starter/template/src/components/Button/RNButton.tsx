@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -14,7 +14,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { moderateScale } from "react-native-size-matters";
-import { SIZES, SPACING, THEME } from "../../theme";
+import { SIZES, SPACING, useTheme, type ThemeColors } from "@/theme";
 import RNText from "../Text/RNText";
 
 type Variant = "primary" | "secondary" | "outline" | "ghost" | "danger";
@@ -32,40 +32,24 @@ interface RNButtonProps {
   children?: React.ReactNode;
   height?: number;
   textSize?: number;
+  /** Defaults to `title`. Required when the button renders only an icon. */
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const VARIANT_STYLES: Record<
-  Variant,
-  { bg: string; border: string; color: string }
-> = {
-  primary: {
-    bg: THEME.primary,
-    border: THEME.primary,
-    color: THEME.textOnPrimary,
-  },
-  secondary: {
-    bg: THEME.primaryLight,
-    border: THEME.primaryLight,
-    color: THEME.primary,
-  },
-  outline: {
-    bg: "transparent",
-    border: THEME.primary,
-    color: THEME.primary,
-  },
-  ghost: {
-    bg: "transparent",
-    border: "transparent",
-    color: THEME.primary,
-  },
-  danger: {
-    bg: THEME.dangerLight,
-    border: THEME.dangerLight,
-    color: THEME.danger,
-  },
-};
+// Derived from the live palette rather than frozen at module scope, so button
+// colours follow the theme.
+const variantStyles = (
+  c: ThemeColors,
+): Record<Variant, { bg: string; border: string; color: string }> => ({
+  primary: { bg: c.primary, border: c.primary, color: c.textOnPrimary },
+  secondary: { bg: c.primaryLight, border: c.primaryLight, color: c.primary },
+  outline: { bg: "transparent", border: c.primary, color: c.primary },
+  ghost: { bg: "transparent", border: "transparent", color: c.primary },
+  danger: { bg: c.dangerLight, border: c.dangerLight, color: c.danger },
+});
 
 const RNButton: React.FC<RNButtonProps> = ({
   title,
@@ -80,7 +64,10 @@ const RNButton: React.FC<RNButtonProps> = ({
   children,
   height = SIZES.buttonHeight,
   textSize = 16,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
+  const { colors } = useTheme();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.get() }],
@@ -93,7 +80,8 @@ const RNButton: React.FC<RNButtonProps> = ({
     scale.set(withSpring(1, { damping: 18, stiffness: 220 }));
   }, [scale]);
 
-  const v = VARIANT_STYLES[variant];
+  const v = useMemo(() => variantStyles(colors)[variant], [colors, variant]);
+  const isDisabled = Boolean(disabled || loading);
 
   const inner =
     children ??
@@ -109,10 +97,16 @@ const RNButton: React.FC<RNButtonProps> = ({
 
   return (
     <AnimatedPressable
-      disabled={disabled || loading}
+      disabled={isDisabled}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityHint={accessibilityHint}
+      // `busy` makes screen readers announce the loading state instead of
+      // silently ignoring taps.
+      accessibilityState={{ disabled: isDisabled, busy: Boolean(loading) }}
       style={[
         styles.shell,
         {

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Expo SDK 56 documentation
+    url: https://docs.expo.dev/versions/v56.0.0/
+    about: For questions about Expo itself rather than this starter.
+  - name: Contributing guide
+    url: https://github.com/varunindiit/create-expo-starter/blob/main/CONTRIBUTING.md
+    about: How the repo is laid out and how to make a change.

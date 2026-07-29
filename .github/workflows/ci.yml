@@ -1,0 +1,135 @@
+name: CI
+
+# NOTE: workflows must live in `.github/workflows/` at the REPOSITORY ROOT.
+# They previously sat inside create-expo-starter/, where GitHub never reads
+# them — which is why this pipeline had never run. Jobs that operate on the
+# published CLI set `working-directory: create-expo-starter` explicitly.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cli:
+    name: CLI — lint & scaffold smoke test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows is in the matrix on purpose: the dependency-install step
+        # shells out to npm/yarn/pnpm and used to break on win32.
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20, 22, 24]
+        exclude:
+          - os: windows-latest
+            node-version: 22
+          - os: macos-latest
+            node-version: 22
+    defaults:
+      run:
+        working-directory: create-expo-starter
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # The CLI has zero runtime dependencies, so there is nothing to install.
+      - name: Syntax check
+        run: npm run lint
+
+      - name: Unit tests (pure functions)
+        run: npm run test:unit
+
+      - name: Scaffold smoke test
+        run: npm test
+
+  template-drift:
+    name: Template is in sync with the dev app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Regenerating the template must be a no-op. If this fails, someone
+      # edited create-expo-starter/template/ by hand or forgot to run
+      # `npm run sync-template` — either way the published template would
+      # not match the dev app it is supposed to mirror.
+      - name: Regenerate template
+        run: node ./scripts/sync-template.mjs
+
+      - name: Fail if the template drifted
+        run: |
+          if ! git diff --quiet; then
+            echo "::error::create-expo-starter/template/ is out of sync. Run 'npm run sync-template' and commit the result."
+            git diff --stat
+            exit 1
+          fi
+
+  app:
+    name: Dev app — typecheck, lint & unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npx eslint .
+
+      - name: Unit tests
+        run: npm test -- --ci
+
+  generated-app:
+    name: Generated app installs & typechecks (${{ matrix.preset }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [minimal, standard, full]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The real contract of a scaffolder: the project it emits must actually
+      # install and typecheck. Structural smoke tests cannot prove this.
+      - name: Scaffold
+        run: node create-expo-starter/bin/index.js ci-app --preset ${{ matrix.preset }} --no-install --no-git
+
+      - name: Install generated project
+        working-directory: ci-app
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck generated project
+        working-directory: ci-app
+        run: npm run typecheck
+
+      - name: Lint generated project
+        working-directory: ci-app
+        run: npx eslint .
+
+      - name: Test generated project
+        working-directory: ci-app
+        run: npm test -- --ci

@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from "react";
 import {
   StyleProp,
-  StyleSheet,
   TextInput,
   TextInputProps,
   TouchableOpacity,
@@ -9,7 +8,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { moderateScale } from "react-native-size-matters";
-import { FONTS, SPACING, THEME } from "../../theme";
+import { FONTS, SPACING, makeStyles, useTheme } from "@/theme";
 import RNText from "../Text/RNText";
 import { EyeIcon, EyeOffIcon } from "../Icon/SvgIcons";
 
@@ -34,7 +33,7 @@ const RNInput: React.FC<RNInputProps> = ({
   leftIcon,
   rightIcon,
   onPressRightIcon,
-  focusedBorderColor = THEME.primary,
+  focusedBorderColor,
   style,
   onFocus,
   onBlur,
@@ -42,15 +41,22 @@ const RNInput: React.FC<RNInputProps> = ({
 }) => {
   const [secureVisible, setSecureVisible] = useState(false);
   const [focused, setFocused] = useState(false);
+  const styles = useStyles();
+  const { colors } = useTheme();
 
   const toggleSecure = useCallback(() => setSecureVisible((v) => !v), []);
 
   const right = secure ? (
-    <TouchableOpacity onPress={toggleSecure} hitSlop={10}>
+    <TouchableOpacity
+      onPress={toggleSecure}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel={secureVisible ? "Hide password" : "Show password"}
+    >
       {secureVisible ? (
-        <EyeIcon color={THEME.textMuted} />
+        <EyeIcon color={colors.textMuted} />
       ) : (
-        <EyeOffIcon color={THEME.textMuted} />
+        <EyeOffIcon color={colors.textMuted} />
       )}
     </TouchableOpacity>
   ) : rightIcon ? (
@@ -66,7 +72,7 @@ const RNInput: React.FC<RNInputProps> = ({
   return (
     <View style={[styles.wrap, containerStyle]}>
       {label ? (
-        <RNText size={13} color={THEME.textSecondary} font="medium" style={styles.label}>
+        <RNText size={13} color={colors.textSecondary} font="medium" style={styles.label}>
           {label}
         </RNText>
       ) : null}
@@ -75,17 +81,18 @@ const RNInput: React.FC<RNInputProps> = ({
           styles.inputContainer,
           {
             borderColor: error
-              ? THEME.danger
+              ? colors.danger
               : focused
-              ? focusedBorderColor
-              : THEME.border,
+                ? (focusedBorderColor ?? colors.primary)
+                : colors.border,
           },
           inputContainerStyle,
         ]}
       >
         {leftIcon ? <View style={styles.left}>{leftIcon}</View> : null}
         <TextInput
-          allowFontScaling={false}
+          accessibilityLabel={label}
+          maxFontSizeMultiplier={1.3}
           {...rest}
           onFocus={(e) => {
             setFocused(true);
@@ -95,14 +102,14 @@ const RNInput: React.FC<RNInputProps> = ({
             setFocused(false);
             onBlur?.(e);
           }}
-          placeholderTextColor={THEME.textPlaceholder}
+          placeholderTextColor={colors.textPlaceholder}
           secureTextEntry={secure && !secureVisible}
           style={[styles.input, style]}
         />
         {right ? <View style={styles.right}>{right}</View> : null}
       </View>
       {error ? (
-        <RNText size={11} color={THEME.danger} style={styles.errorText}>
+        <RNText size={11} color={colors.danger} style={styles.errorText}>
           {error}
         </RNText>
       ) : null}
@@ -112,7 +119,7 @@ const RNInput: React.FC<RNInputProps> = ({
 
 export default React.memo(RNInput);
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   wrap: { width: "100%" },
   label: { marginBottom: moderateScale(6) },
   inputContainer: {
@@ -120,14 +127,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(18),
     borderRadius: SPACING.radiusPill,
     borderWidth: 1,
-    borderColor: THEME.border,
-    backgroundColor: THEME.surface,
+    borderColor: c.border,
+    backgroundColor: c.surface,
     flexDirection: "row",
     alignItems: "center",
   },
   input: {
     flex: 1,
-    color: THEME.text,
+    color: c.text,
     fontFamily: FONTS.regular,
     fontSize: moderateScale(14, 0.3),
     paddingVertical: 0,
@@ -135,4 +142,4 @@ const styles = StyleSheet.create({
   left: { marginRight: moderateScale(10) },
   right: { marginLeft: moderateScale(10) },
   errorText: { marginTop: moderateScale(6) },
-});
+}));

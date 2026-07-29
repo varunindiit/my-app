@@ -1,7 +1,7 @@
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { moderateScale } from "react-native-size-matters";
-import { SPACING, THEME } from "../../theme";
+import { SPACING, useTheme } from "@/theme";
 import RNText from "../Text/RNText";
 
 interface ChipProps {
@@ -21,33 +21,36 @@ const Chip: React.FC<ChipProps> = ({
   size = "md",
   variant = "outline",
 }) => {
-  const bg =
-    active
-      ? THEME.primary
-      : variant === "soft"
-      ? THEME.primaryFaint
+  const { colors } = useTheme();
+
+  const bg = active
+    ? colors.primary
+    : variant === "soft"
+      ? colors.primaryFaint
       : variant === "filled"
-      ? THEME.primaryLight
-      : THEME.surface;
-  const border =
-    active
-      ? THEME.primary
-      : variant === "outline"
-      ? THEME.inputBorder
+        ? colors.primaryLight
+        : colors.surface;
+  const border = active
+    ? colors.primary
+    : variant === "outline"
+      ? colors.inputBorder
       : "transparent";
-  const color = active ? THEME.textOnPrimary : THEME.text;
+  const color = active ? colors.textOnPrimary : colors.text;
 
   const Comp = onPress ? Pressable : View;
   return (
     <Comp
       onPress={onPress}
+      {...(onPress
+        ? {
+            accessibilityRole: "button" as const,
+            accessibilityState: { selected: Boolean(active) },
+          }
+        : {})}
       style={[
         styles.base,
         size === "sm" ? styles.sm : styles.md,
-        {
-          backgroundColor: bg,
-          borderColor: border,
-        },
+        { backgroundColor: bg, borderColor: border },
       ]}
     >
       {icon}

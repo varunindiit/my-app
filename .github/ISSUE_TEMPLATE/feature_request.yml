@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest something the starter should include
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every addition is paid for by everyone who scaffolds a project, so the
+        most useful requests explain the problem rather than just the library.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: What do you currently have to do by hand in every project?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like the starter to do?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Should this be on by default?
+      options:
+        - Yes — every project needs it
+        - "No — it should be an opt-in feature flag / preset"
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered

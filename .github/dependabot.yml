@@ -1,0 +1,39 @@
+version: 2
+
+updates:
+  # The dev app is the source of truth for every dependency the template ships.
+  # Bumping it here and running `npm run sync-template` is the supported path
+  # for keeping scaffolded projects current.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      expo:
+        patterns:
+          - "expo"
+          - "expo-*"
+          - "@expo/*"
+          - "eslint-config-expo"
+          - "jest-expo"
+      react-native:
+        patterns:
+          - "react-native"
+          - "react-native-*"
+          - "react"
+          - "react-dom"
+      dev-tooling:
+        dependency-type: development
+    ignore:
+      # Expo pins these to SDK-compatible ranges; `npx expo install --check`
+      # is the correct upgrade path, not an isolated Dependabot bump.
+      - dependency-name: react-native
+        update-types: [version-update:semver-major]
+      - dependency-name: react
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

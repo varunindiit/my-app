@@ -1,26 +1,7 @@
 {
   "name": "@varunindiit/create-expo-starter",
-  "version": "1.1.0",
-  "publishConfig": {
-    "access": "public"
-  },
-  "description": "Production-ready Expo (SDK 56) starter: expo-router auth flow, bottom tabs, Redux Toolkit, theming, i18n, SVG support, API/service layer and reusable components. Scaffolds a fully renamed project in seconds.",
-  "type": "commonjs",
-  "bin": {
-    "create-expo-starter": "bin/index.js"
-  },
-  "files": [
-    "bin",
-    "lib",
-    "template"
-  ],
-  "scripts": {
-    "lint": "node --check bin/index.js && node --check lib/utils.js && node --check lib/prompt.js && node --check lib/scaffold.js && node --check scripts/smoke.js",
-    "test": "node scripts/smoke.js"
-  },
-  "engines": {
-    "node": ">=20.19.0"
-  },
+  "version": "2.0.0",
+  "description": "Production-ready Expo (SDK 56) starter: expo-router auth flow with session persistence, bottom tabs, Redux Toolkit + RTK Query, light/dark theming, i18n, SecureStore, typed API layer with token refresh, and a tested component library. Scaffolds a fully renamed, feature-selectable project in seconds.",
   "keywords": [
     "expo",
     "expo-router",
@@ -28,10 +9,48 @@
     "starter",
     "template",
     "boilerplate",
+    "scaffold",
     "redux",
+    "rtk-query",
     "typescript",
+    "dark-mode",
+    "i18n",
     "cli"
   ],
-  "author": "",
-  "license": "MIT"
+  "homepage": "https://github.com/varunindiit/create-expo-starter#readme",
+  "bugs": {
+    "url": "https://github.com/varunindiit/create-expo-starter/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/varunindiit/create-expo-starter.git",
+    "directory": "create-expo-starter"
+  },
+  "license": "MIT",
+  "author": "varunindiit",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "commonjs",
+  "bin": {
+    "create-expo-starter": "bin/index.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "template",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "lint": "node --check bin/index.js && node --check lib/utils.js && node --check lib/prompt.js && node --check lib/scaffold.js && node --check lib/features.js && node --check lib/transform.js && node --check lib/version-check.js && node --check scripts/smoke.js && node --check scripts/unit.js",
+    "test": "node scripts/smoke.js",
+    "test:unit": "node scripts/unit.js",
+    "test:all": "npm run lint && npm run test:unit && npm test",
+    "prepublishOnly": "npm run test:all"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }

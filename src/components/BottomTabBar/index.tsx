@@ -1,46 +1,79 @@
 import React from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { moderateScale } from "react-native-size-matters";
-import { THEME } from "../../theme";
+import { makeStyles } from "@/theme";
+import type { SvgProps } from "react-native-svg";
 
-import HomeActive from "../../assets/svg/homeActive.svg";
-import HomeUnActive from "../../assets/svg/homeUnActive.svg";
-import TripActive from "../../assets/svg/tripActive.svg";
-import TripUnActive from "../../assets/svg/tripUnActive.svg";
-import ChatActive from "../../assets/svg/chatActive.svg";
-import ChatUnActive from "../../assets/svg/chatUnActive.svg";
-import UserActive from "../../assets/svg/userActive.svg";
-import UserUnActive from "../../assets/svg/userUnActive.svg";
+import HomeActive from "@/assets/svg/homeActive.svg";
+import HomeUnActive from "@/assets/svg/homeUnActive.svg";
+import ListActive from "@/assets/svg/listActive.svg";
+import ListUnActive from "@/assets/svg/listUnActive.svg";
+import ChatActive from "@/assets/svg/chatActive.svg";
+import ChatUnActive from "@/assets/svg/chatUnActive.svg";
+import UserActive from "@/assets/svg/userActive.svg";
+import UserUnActive from "@/assets/svg/userUnActive.svg";
 
-interface BottomTabBarProps {
-  state: any;
-  navigation: any;
+type TabIcon = { Active: React.FC<SvgProps>; Inactive: React.FC<SvgProps> };
+
+/**
+ * Structural subset of what expo-router hands a custom `tabBar`.
+ *
+ * Declared here rather than imported from `@react-navigation/bottom-tabs`,
+ * which is a transitive dependency of expo-router — importing from it directly
+ * would break the moment expo-router changes its internals, and it isn't in
+ * this project's package.json.
+ */
+interface TabRoute {
+  key: string;
+  name: string;
+  params?: object;
 }
 
-const ICON_MAP: Record<
-  string,
-  { Active: React.FC<any>; Inactive: React.FC<any> }
-> = {
-  Home: { Active: HomeActive, Inactive: HomeUnActive },
-  Trips: { Active: TripActive, Inactive: TripUnActive },
-  Messages: { Active: ChatActive, Inactive: ChatUnActive },
-  Profile: { Active: UserActive, Inactive: UserUnActive },
+export interface BottomTabBarProps {
+  state: { index: number; routes: TabRoute[] };
+  descriptors: Record<
+    string,
+    { options: { title?: string; tabBarAccessibilityLabel?: string } }
+  >;
+  navigation: {
+    emit(event: {
+      type: "tabPress";
+      target: string;
+      canPreventDefault: true;
+    }): { defaultPrevented: boolean };
+    navigate(name: string, params?: object): void;
+  };
+}
+
+/**
+ * Route name -> icon pair.
+ *
+ * Keys are expo-router route names (the file name without its extension;
+ * `index` for a group's home route). Add a route here when you add a tab —
+ * anything unmapped falls back to `FALLBACK_ICON` rather than crashing, which
+ * is what the old name-guessing logic did when it met an unexpected route.
+ */
+export const TAB_ICONS: Record<string, TabIcon> = {
+  index: { Active: HomeActive, Inactive: HomeUnActive },
+  components: { Active: ListActive, Inactive: ListUnActive },
+  messages: { Active: ChatActive, Inactive: ChatUnActive },
+  profile: { Active: UserActive, Inactive: UserUnActive },
 };
 
-// Maps a route name to a tab icon key. Case-insensitive so it works with both
-// React-Navigation style names ("UserHome") and expo-router segments ("home").
-const tabKey = (name: string) => {
-  const n = name.toLowerCase();
-  // expo-router's home tab is the group index route.
-  if (n === "index" || n.includes("home")) return "Home";
-  if (n.includes("trip")) return "Trips";
-  if (n.includes("message")) return "Messages";
-  return "Profile";
+const FALLBACK_ICON: TabIcon = {
+  Active: ListActive,
+  Inactive: ListUnActive,
 };
 
-const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
+const BottomTabBar: React.FC<BottomTabBarProps> = ({
+  state,
+  descriptors,
+  navigation,
+}) => {
   const insets = useSafeAreaInsets();
+  const styles = useStyles();
+
   return (
     <View
       style={[
@@ -49,11 +82,13 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
       ]}
     >
       <View style={styles.bar}>
-        {state.routes.map((route: any, index: number) => {
+        {state.routes.map((route, index) => {
           const isFocused = state.index === index;
-          const key = tabKey(route.name);
-          const cfg = ICON_MAP[key];
+          const { options } = descriptors[route.key];
+          const cfg = TAB_ICONS[route.name] ?? FALLBACK_ICON;
           const Icon = isFocused ? cfg.Active : cfg.Inactive;
+          const label =
+            options.tabBarAccessibilityLabel ?? options.title ?? route.name;
 
           const onPress = () => {
             const event = navigation.emit({
@@ -61,8 +96,9 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
               target: route.key,
               canPreventDefault: true,
             });
-            if (!isFocused && !event.defaultPrevented)
-              navigation.navigate(route.name);
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name, route.params);
+            }
           };
 
           return (
@@ -71,17 +107,12 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
               onPress={onPress}
               style={styles.item}
               hitSlop={8}
+              accessibilityRole="tab"
+              accessibilityLabel={label}
+              accessibilityState={{ selected: isFocused }}
             >
-              <View
-                style={[
-                  styles.iconWrap,
-                  isFocused && styles.iconWrapActive,
-                ]}
-              >
-                <Icon
-                  width={moderateScale(26)}
-                  height={moderateScale(26)}
-                />
+              <View style={[styles.iconWrap, isFocused && styles.iconWrapActive]}>
+                <Icon width={moderateScale(26)} height={moderateScale(26)} />
                 {isFocused && <View style={styles.activeNotch} />}
               </View>
             </Pressable>
@@ -94,7 +125,7 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
 
 export default BottomTabBar;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   wrapper: {
     position: "absolute",
     left: 0,
@@ -108,16 +139,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: THEME.tabBg,
+    backgroundColor: c.tabBg,
     borderRadius: moderateScale(32),
     paddingHorizontal: moderateScale(12),
     paddingVertical: moderateScale(10),
-    shadowColor: "#000",
+    shadowColor: c.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
     elevation: 12,
-    ...Platform.select({ android: { elevation: 14 } }),
   },
   item: {
     flex: 1,
@@ -132,7 +162,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconWrapActive: {
-    backgroundColor: THEME.primary,
+    backgroundColor: c.primary,
     overflow: "hidden",
     borderRadius: moderateScale(18),
   },
@@ -142,8 +172,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: moderateScale(11.55),
     height: moderateScale(4.23),
-    backgroundColor: THEME.tabBg,
+    backgroundColor: c.tabBg,
     borderTopLeftRadius: moderateScale(2),
     borderTopRightRadius: moderateScale(2),
   },
-});
+}));

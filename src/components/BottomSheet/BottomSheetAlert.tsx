@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { moderateScale } from "react-native-size-matters";
-import { SPACING, THEME } from "../../theme";
+import { SPACING, useTheme } from "@/theme";
 import { RNButton } from "../Button";
 import RNText from "../Text/RNText";
 import BottomSheet from "./BottomSheet";
@@ -31,6 +31,8 @@ const BottomSheetAlert: React.FC<BottomSheetAlertProps> = ({
   loading,
   destructive,
 }) => {
+  const { colors } = useTheme();
+
   const handleCancel = () => {
     onCancel?.();
     onClose();
@@ -41,7 +43,7 @@ const BottomSheetAlert: React.FC<BottomSheetAlertProps> = ({
       <RNText
         font="semibold"
         size={20}
-        color={THEME.text}
+        color={colors.text}
         textAlign="center"
         style={styles.title}
       >
@@ -51,7 +53,7 @@ const BottomSheetAlert: React.FC<BottomSheetAlertProps> = ({
       {description ? (
         <RNText
           size={13}
-          color={THEME.textSecondary}
+          color={colors.textSecondary}
           textAlign="center"
           style={styles.description}
         >

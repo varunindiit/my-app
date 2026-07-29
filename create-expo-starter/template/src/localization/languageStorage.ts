@@ -1,5 +1,5 @@
-import { storage } from "../services/storage";
-import { LANGUAGE_KEY, LANGUAGE_SELECTED_KEY } from "../utils/constants";
+import { storage } from "@/services/storage";
+import { LANGUAGE_KEY, LANGUAGE_SELECTED_KEY } from "@/utils/constants";
 import {
   DEFAULT_LANGUAGE,
   LanguageCode,

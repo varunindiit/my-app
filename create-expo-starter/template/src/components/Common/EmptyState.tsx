@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { moderateScale } from "react-native-size-matters";
-import { SPACING, THEME } from "../../theme";
+import { SPACING, useTheme } from "@/theme";
 import RNText from "../Text/RNText";
 
 interface EmptyStateProps {
@@ -10,32 +10,36 @@ interface EmptyStateProps {
   icon?: React.ReactNode;
 }
 
-const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon }) => (
-  <View style={styles.wrap}>
-    {icon ? <View style={styles.icon}>{icon}</View> : null}
-    {title ? (
-      <RNText
-        font="semibold"
-        size={16}
-        color={THEME.text}
-        textAlign="center"
-        style={styles.title}
-      >
-        {title}
-      </RNText>
-    ) : null}
-    {description ? (
-      <RNText
-        size={13}
-        color={THEME.textMuted}
-        textAlign="center"
-        style={styles.desc}
-      >
-        {description}
-      </RNText>
-    ) : null}
-  </View>
-);
+const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon }) => {
+  const { colors } = useTheme();
+
+  return (
+    <View style={styles.wrap}>
+      {icon ? <View style={styles.icon}>{icon}</View> : null}
+      {title ? (
+        <RNText
+          font="semibold"
+          size={16}
+          color={colors.text}
+          textAlign="center"
+          style={styles.title}
+        >
+          {title}
+        </RNText>
+      ) : null}
+      {description ? (
+        <RNText
+          size={13}
+          color={colors.textMuted}
+          textAlign="center"
+          style={styles.desc}
+        >
+          {description}
+        </RNText>
+      ) : null}
+    </View>
+  );
+};
 
 export default EmptyState;
 

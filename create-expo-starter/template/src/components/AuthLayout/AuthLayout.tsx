@@ -3,7 +3,6 @@ import {
   ImageBackground,
   ImageSourcePropType,
   StyleProp,
-  StyleSheet,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -12,11 +11,11 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { moderateScale } from "react-native-size-matters";
 import { useNavigation } from "expo-router";
-import { SPACING, THEME } from "../../theme";
+import { SPACING, makeStyles, useTheme } from "@/theme";
 import RNText from "../Text/RNText";
-import BackIcon from "../../assets/svg/back.svg";
+import BackIcon from "@/assets/svg/back.svg";
 
-const AUTH_BG: ImageSourcePropType = require("../../assets/image/BackGroundAuth.png");
+const AUTH_BG: ImageSourcePropType = require("@/assets/image/BackGroundAuth.png");
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -46,18 +45,20 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   backgroundSource,
 }) => {
   const nav = useNavigation();
+  const styles = useStyles();
+  const { colors } = useTheme();
 
   const inner = (
     <View style={[styles.body, contentStyle]}>
       {title ? (
         <View style={styles.titleBlock}>
-          <RNText font="bold" size={24} color={THEME.text}>
+          <RNText font="bold" size={24} color={colors.text}>
             {title}
           </RNText>
           {subtitle ? (
             <RNText
               size={13}
-              color={THEME.textSecondary}
+              color={colors.textSecondary}
               style={styles.subtitle}
             >
               {subtitle}
@@ -77,12 +78,14 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
               <TouchableOpacity
                 onPress={() => nav.canGoBack() && nav.goBack()}
                 hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
                 style={styles.backBtn}
               >
                 <BackIcon
                   width={moderateScale(22)}
                   height={moderateScale(22)}
-                  color={THEME.text}
+                  color={colors.text}
                 />
               </TouchableOpacity>
             ) : (
@@ -91,7 +94,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
             <View style={styles.topBarSpacer} />
             {rightLabel ? (
               <TouchableOpacity onPress={onRightPress} hitSlop={10}>
-                <RNText font="medium" size={14} color={rightColor ?? THEME.primary}>
+                <RNText font="medium" size={14} color={rightColor ?? colors.primary}>
                   {rightLabel}
                 </RNText>
               </TouchableOpacity>
@@ -135,10 +138,10 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
 
 export default AuthLayout;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   flex: { flex: 1 },
   topBarSpacer: { flex: 1 },
-  plainBg: { backgroundColor: THEME.background },
+  plainBg: { backgroundColor: c.background },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -167,4 +170,4 @@ const styles = StyleSheet.create({
     marginTop: moderateScale(6),
     lineHeight: moderateScale(20),
   },
-});
+}));

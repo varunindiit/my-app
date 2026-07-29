@@ -1,8 +1,7 @@
-import React from "react";
 import { Tabs } from "expo-router";
-import BottomTabBar from "../../components/BottomTabBar";
+import BottomTabBar from "@/components/BottomTabBar";
 
-/** Home flow bottom tabs — Home and Profile. */
+/** Signed-in flow bottom tabs. */
 export default function TabsLayout() {
   return (
     <Tabs
@@ -12,8 +11,11 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: "transparent" },
       }}
     >
-      <Tabs.Screen name="index" />
-      <Tabs.Screen name="profile" />
+      <Tabs.Screen name="index" options={{ title: "Home" }} />
+      {/* #if gallery */}
+      <Tabs.Screen name="components" options={{ title: "Components" }} />
+      {/* #endif */}
+      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>
   );
 }

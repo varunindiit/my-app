@@ -1,13 +1,12 @@
 import React, { useRef, useState } from "react";
 import {
   NativeSyntheticEvent,
-  StyleSheet,
   TextInput,
   TextInputKeyPressEventData,
   View,
 } from "react-native";
 import { moderateScale } from "react-native-size-matters";
-import { FONTS, THEME } from "../../theme";
+import { FONTS, makeStyles, useTheme } from "@/theme";
 
 interface OtpInputProps {
   length?: number;
@@ -28,6 +27,8 @@ const OtpInput: React.FC<OtpInputProps> = ({
 }) => {
   const inputs = useRef<(TextInput | null)[]>([]);
   const [focusIndex, setFocusIndex] = useState(autoFocus ? 0 : -1);
+  const styles = useStyles();
+  const { colors } = useTheme();
 
   const setCharAt = (i: number, c: string) => {
     const next = value.split("");
@@ -65,7 +66,10 @@ const OtpInput: React.FC<OtpInputProps> = ({
         const active = focusIndex === i;
         return (
           <TextInput
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
+            accessibilityLabel={`Digit ${i + 1} of ${length}`}
+            textContentType="oneTimeCode"
+            autoComplete="one-time-code"
             key={i}
             ref={(r) => {
               inputs.current[i] = r;
@@ -84,10 +88,10 @@ const OtpInput: React.FC<OtpInputProps> = ({
               cellSize
                 ? { width: cellSize, height: cellSize }
                 : null,
-              { borderColor: active ? THEME.primary : THEME.inputBorder },
+              { borderColor: active ? colors.primary : colors.inputBorder },
             ]}
-            selectionColor={THEME.primary}
-            placeholderTextColor={THEME.textPlaceholder}
+            selectionColor={colors.primary}
+            placeholderTextColor={colors.textPlaceholder}
           />
         );
       })}
@@ -97,7 +101,7 @@ const OtpInput: React.FC<OtpInputProps> = ({
 
 export default OtpInput;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   row: {
     flexDirection: "row",
     gap: moderateScale(12),
@@ -107,11 +111,11 @@ const styles = StyleSheet.create({
     height: moderateScale(60),
     borderRadius: moderateScale(20),
     borderWidth: 1,
-    backgroundColor: THEME.surface,
+    backgroundColor: c.surface,
     textAlign: "center",
-    color: THEME.text,
+    color: c.text,
     fontFamily: FONTS.regular,
     fontWeight: "400",
     fontSize: moderateScale(14, 0.3),
   },
-});
+}));

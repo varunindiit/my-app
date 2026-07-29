@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView, Edges } from "react-native-safe-area-context";
-import { THEME } from "../../theme";
+import { useTheme } from "@/theme";
 
 interface MainContainerProps {
   children?: React.ReactNode;
@@ -31,25 +31,35 @@ const MainContainer: React.FC<MainContainerProps> = memo(
     children,
     background,
     edges = ["top", "bottom"] as const,
-    bgColor = THEME.background,
-    statusBarStyle = "dark-content",
+    bgColor,
+    statusBarStyle,
     style,
     contentStyle,
     gradient = false,
-    gradientColors = ["#FAE1CF", "#FFFFFF"],
+    gradientColors,
     gradientStart = { x: 0, y: 0 },
     gradientEnd = { x: 0, y: 0.4 },
   }) {
+    const { colors, isDark } = useTheme();
+
     return (
-    <View style={[styles.root, { backgroundColor: bgColor }, style]}>
+    <View
+      style={[styles.root, { backgroundColor: bgColor ?? colors.background }, style]}
+    >
       <StatusBar
-        barStyle={statusBarStyle}
+        barStyle={statusBarStyle ?? (isDark ? "light-content" : "dark-content")}
         backgroundColor="transparent"
         translucent
       />
       {gradient ? (
         <LinearGradient
-          colors={gradientColors as [string, string, ...string[]]}
+          colors={
+            (gradientColors ?? [colors.backgroundAlt, colors.background]) as [
+              string,
+              string,
+              ...string[],
+            ]
+          }
           start={gradientStart}
           end={gradientEnd}
           style={StyleSheet.absoluteFill}

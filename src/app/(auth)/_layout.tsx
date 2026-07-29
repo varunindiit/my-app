@@ -1,15 +1,16 @@
-import React from "react";
 import { Stack } from "expo-router";
-import { THEME } from "../../theme";
+import { useTheme } from "@/theme";
 
 /** Authentication flow stack. */
 export default function AuthLayout() {
+  const { colors } = useTheme();
+
   return (
     <Stack
       initialRouteName="login"
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: THEME.background },
+        contentStyle: { backgroundColor: colors.background },
         animation: "slide_from_right",
       }}
     >

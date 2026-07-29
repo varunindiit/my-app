@@ -9,7 +9,7 @@ import {
 import { useNavigation } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { moderateScale } from "react-native-size-matters";
-import { SIZES, THEME } from "../../theme";
+import { SIZES, useTheme } from "@/theme";
 import { ChevronLeftIcon } from "../Icon/SvgIcons";
 import RNText from "../Text/RNText";
 
@@ -29,7 +29,7 @@ export interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({
   title,
-  titleColor = THEME.text,
+  titleColor,
   rightLabel,
   onRightPress,
   rightIcon,
@@ -42,6 +42,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const nav = useNavigation();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const handleBack = () => {
     if (onBack) return onBack();
@@ -63,10 +64,12 @@ const Header: React.FC<HeaderProps> = ({
             onPress={handleBack}
             activeOpacity={0.7}
             hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
             style={styles.iconBtn}
           >
             {leftIcon ?? (
-              <ChevronLeftIcon size={moderateScale(22)} color={THEME.text} />
+              <ChevronLeftIcon size={moderateScale(22)} color={colors.text} />
             )}
           </TouchableOpacity>
         ) : null}
@@ -77,9 +80,10 @@ const Header: React.FC<HeaderProps> = ({
           <RNText
             font="semibold"
             size={17}
-            color={titleColor}
+            color={titleColor ?? colors.text}
             numberOfLines={1}
             textAlign="center"
+            accessibilityRole="header"
           >
             {title}
           </RNText>
@@ -93,7 +97,7 @@ const Header: React.FC<HeaderProps> = ({
             activeOpacity={0.7}
             hitSlop={10}
           >
-            <RNText font="medium" size={14} color={THEME.primary}>
+            <RNText font="medium" size={14} color={colors.primary}>
               {rightLabel}
             </RNText>
           </TouchableOpacity>

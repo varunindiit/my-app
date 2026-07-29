@@ -1,31 +1,36 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import * as Location from "expo-location";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../redux/store";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   locationDenied,
   locationError,
   locationLoading,
   locationResolved,
-} from "../redux/slice/location";
-import { reverseGeocode } from "../services/places";
+} from "@/redux/slice/location";
+import { reverseGeocode } from "@/services/places";
 
 /**
- * Reusable device-location hook (Expo).
+ * Reusable device-location hook.
  *
- * Requests location permission via `expo-location`, fetches the current
- * coordinates, reverse-geocodes them into a readable city label and stores
- * everything in the global `location` slice so any screen (Passenger or Driver
- * home) can render it.
+ * Requests permission via `expo-location`, fetches the current coordinates,
+ * reverse-geocodes them into a readable label and stores everything in the
+ * `location` slice so any screen can read it without re-prompting.
  *
- * The fetch runs automatically once per app session (when the slice is still
+ * The fetch runs automatically once per app session (while the slice is still
  * `idle`); call `refetch()` to retry after a denial or error.
  */
 export const useCurrentLocation = (auto = true) => {
-  const dispatch = useDispatch();
-  const location = useSelector((s: RootState) => s.location);
+  const dispatch = useAppDispatch();
+  const location = useAppSelector((s) => s.location);
+  const abortRef = useRef<AbortController | null>(null);
 
   const fetchLocation = useCallback(async () => {
+    // Supersede any in-flight geocode so a fast refetch can't resolve with a
+    // stale answer after the newer one lands.
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     dispatch(locationLoading());
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -40,7 +45,11 @@ export const useCurrentLocation = (auto = true) => {
       const result = await reverseGeocode(
         position.coords.latitude,
         position.coords.longitude,
+        controller.signal,
       );
+
+      if (controller.signal.aborted) return;
+
       dispatch(
         locationResolved({
           label: result.shortLabel,
@@ -49,11 +58,12 @@ export const useCurrentLocation = (auto = true) => {
           longitude: result.longitude,
         }),
       );
-    } catch (err: any) {
-      const servicesOff = /location services/i.test(err?.message ?? "");
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      const message = error instanceof Error ? error.message : "";
       dispatch(
         locationError(
-          servicesOff
+          /location services/i.test(message)
             ? "Location services are off"
             : "Couldn't get your location",
         ),
@@ -61,13 +71,16 @@ export const useCurrentLocation = (auto = true) => {
     }
   }, [dispatch]);
 
-  // Fire once per session while the slice is still idle.
+  const status = location.status;
+
   useEffect(() => {
-    if (auto && location.status === "idle") {
+    if (auto && status === "idle") {
       fetchLocation();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [auto, status, fetchLocation]);
+
+  // Abort any pending geocode when the last consumer unmounts.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   return { ...location, refetch: fetchLocation };
 };

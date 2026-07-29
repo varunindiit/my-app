@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useDispatch } from "react-redux";
-import { setLanguage as setLanguageAction } from "../redux/slice/app";
+import { useAppDispatch } from "@/redux/hooks";
+import { setLanguage as setLanguageAction } from "@/redux/slice/app";
 import {
   DEFAULT_LANGUAGE,
   LANGUAGES,
@@ -16,7 +16,7 @@ import { markLanguageSelected, setStoredLanguage } from "./languageStorage";
  */
 export const useLanguage = () => {
   const { t, i18n } = useTranslation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const current = (i18n.language?.split("-")[0] as LanguageCode) || DEFAULT_LANGUAGE;
 

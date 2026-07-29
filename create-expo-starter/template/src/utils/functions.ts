@@ -1,5 +1,5 @@
 import { showMessage, MessageType } from "react-native-flash-message";
-import { FONTS } from "../theme";
+import { FONTS } from "@/theme";
 
 export const showToast = (
   message: string,

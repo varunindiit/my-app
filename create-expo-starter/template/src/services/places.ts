@@ -1,15 +1,29 @@
 import axios from "axios";
+import api, { toApiError } from "./api";
 import Config from "./Config";
 
 /**
- * Google Places / Directions helpers.
+ * Place search and geocoding.
  *
- * Uses the same Google key the native Maps SDK is configured with. The key
- * must have the "Places API", "Directions API" and "Geocoding API" enabled in
- * the Google Cloud console for these calls to succeed.
+ * ── Why this goes through your backend by default ───────────────────────────
+ * The Places and Geocoding *web services* authenticate with an API key sent in
+ * the request. Google can restrict such a key by IP address, but not by iOS
+ * bundle ID or Android signing certificate — those restrictions only apply to
+ * the native Maps SDKs. A key shipped inside a mobile bundle is therefore
+ * extractable (it is plain text in the JS bundle) and usable by anyone, billed
+ * to you, until you notice.
+ *
+ * So the default path is: app -> your API -> Google, with the key living only
+ * on your server. `docs/google-places-proxy.md` has a ~40-line reference
+ * implementation and the exact response shapes these functions expect.
+ *
+ * For local prototyping you can set `EXPO_PUBLIC_PLACES_DIRECT_MODE=true` to
+ * call Google straight from the device. Keep a hard quota cap on the key and
+ * never ship a build with it enabled — `assertDirectModeIsSafe` throws in
+ * production to make that mistake loud rather than expensive.
  */
 
-const GOOGLE_BASE = "https://maps.googleapis.com/maps/api";
+// ── types ───────────────────────────────────────────────────────────────────
 
 /** A resolved location with everything callers need to render and route. */
 export interface LocationValue {
@@ -26,295 +40,275 @@ export interface PlaceSuggestion {
   description: string;
 }
 
-/** A decoded route between two points. */
-export interface RouteResult {
-  coordinates: LocationValue[];
-  distanceText?: string;
-  durationText?: string;
+/** A reverse-geocoded location enriched with header-friendly labels. */
+export interface ReverseGeocodeResult extends LocationValue {
+  /** City / locality. */
+  city?: string;
+  /** Country name. */
+  country?: string;
+  /** Compact label for headers, e.g. "Lisbon, Portugal". */
+  shortLabel: string;
 }
 
-/**
- * A single alternative route returned by the Directions API. Carries both the
- * human-readable labels (for the route cards) and the raw values (for sorting
- * the fastest route to the top), plus any intermediate "via" segments parsed
- * from the route summary so the detail timeline can show the path it takes.
- */
-export interface RouteOption {
-  id: string;
-  coordinates: LocationValue[];
-  distanceText?: string;
-  durationText?: string;
-  /** Distance in metres — used to sort/compare routes. */
-  distanceValue: number;
-  /** Duration in seconds — used to sort/compare routes. */
-  durationValue: number;
-  /** Google's route summary, e.g. "N3" or "N3 and N8". */
-  summary?: string;
-  /** Intermediate via roads/towns derived from the summary (may be empty). */
-  stops: string[];
+export interface AutocompleteOptions {
+  signal?: AbortSignal;
+  /** Bias results toward a point (usually the device location). */
+  bias?: { latitude: number; longitude: number };
+  /** Metres. Only meaningful together with `bias`. */
+  radius?: number;
 }
 
-const placesApi = axios.create({ baseURL: GOOGLE_BASE, timeout: 15000 });
+// ── direct-mode guard ───────────────────────────────────────────────────────
 
-/** Dedicated session token so autocomplete + details are billed as one session. */
-let sessionToken = "";
-export const newSessionToken = (): string => {
-  sessionToken = `${Date.now().toString(36)}-${Math.floor(
-    Math.random() * 1e9,
-  ).toString(36)}`;
-  return sessionToken;
+const PLACES_NEW_BASE = "https://places.googleapis.com/v1";
+const GEOCODE_BASE = "https://maps.googleapis.com/maps/api/geocode";
+
+const assertDirectModeIsSafe = () => {
+  if (Config.isProduction) {
+    throw new Error(
+      "Places direct mode is enabled in a production build. The Google API key " +
+        "is readable in the shipped bundle and billable by anyone. Route these " +
+        "calls through your backend instead — see docs/google-places-proxy.md.",
+    );
+  }
+  if (!Config.googleMapsKey) {
+    throw new Error(
+      "Places direct mode is enabled but EXPO_PUBLIC_GOOGLE_MAPS_API_KEY is empty.",
+    );
+  }
 };
 
+/** Bare client for direct mode — deliberately not the app's `api` instance. */
+const google = axios.create({ timeout: 15000 });
+
+// ── autocomplete ────────────────────────────────────────────────────────────
+
 /**
- * Live city suggestions for the search field. Returns cities worldwide, but
- * when an optional `bias` (e.g. the device location) is supplied, nearby cities
- * are prioritised to the top of the list while global matches still appear.
+ * Live place suggestions for a search field.
+ *
+ * Returns `[]` for inputs shorter than two characters rather than firing a
+ * billable request per keystroke. Debounce on the caller side too.
  */
 export const autocompletePlaces = async (
   input: string,
-  signal?: AbortSignal,
-  bias?: { latitude: number; longitude: number },
+  options: AutocompleteOptions = {},
 ): Promise<PlaceSuggestion[]> => {
   const query = input.trim();
   if (query.length < 2) return [];
 
-  const { data } = await placesApi.get("/place/autocomplete/json", {
-    signal,
-    params: {
-      input: query,
-      key: Config.googleMapsKey,
-      sessiontoken: sessionToken || newSessionToken(),
-      language: "en",
-      // Restrict suggestions to cities/towns only — excludes shops, streets,
-      // buildings and other place types.
-      types: "(cities)",
-      // Bias (not restrict) toward the user's location so nearby cities rank
-      // first; global cities are still returned.
-      ...(bias
-        ? { location: `${bias.latitude},${bias.longitude}`, radius: 50000 }
-        : {}),
-    },
-  });
+  const { signal, bias, radius = 50000 } = options;
 
-  if (data?.status !== "OK" && data?.status !== "ZERO_RESULTS") {
-    throw new Error(data?.error_message || data?.status || "Places request failed");
+  try {
+    if (!Config.placesDirectMode) {
+      const { data } = await api.get<PlaceSuggestion[]>(
+        `${Config.placesProxyPath}/autocomplete`,
+        {
+          signal,
+          params: {
+            input: query,
+            ...(bias ? { lat: bias.latitude, lng: bias.longitude, radius } : {}),
+          },
+        },
+      );
+      return Array.isArray(data) ? data : [];
+    }
+
+    assertDirectModeIsSafe();
+
+    // Places API (New). The legacy `/place/autocomplete/json` endpoint is not
+    // available to Google Cloud projects created after March 2025.
+    const { data } = await google.post(
+      `${PLACES_NEW_BASE}/places:autocomplete`,
+      {
+        input: query,
+        ...(bias
+          ? {
+              locationBias: {
+                circle: {
+                  center: { latitude: bias.latitude, longitude: bias.longitude },
+                  radius,
+                },
+              },
+            }
+          : {}),
+      },
+      {
+        signal,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": Config.googleMapsKey,
+          "X-Goog-FieldMask":
+            "suggestions.placePrediction.placeId," +
+            "suggestions.placePrediction.text.text," +
+            "suggestions.placePrediction.structuredFormat.mainText.text," +
+            "suggestions.placePrediction.structuredFormat.secondaryText.text",
+        },
+      },
+    );
+
+    type Suggestion = {
+      placePrediction?: {
+        placeId?: string;
+        text?: { text?: string };
+        structuredFormat?: {
+          mainText?: { text?: string };
+          secondaryText?: { text?: string };
+        };
+      };
+    };
+
+    return ((data?.suggestions ?? []) as Suggestion[])
+      .map((s) => s.placePrediction)
+      .filter((p): p is NonNullable<typeof p> => Boolean(p?.placeId))
+      .map((p) => ({
+        placeId: p.placeId as string,
+        primaryText: p.structuredFormat?.mainText?.text ?? p.text?.text ?? "",
+        secondaryText: p.structuredFormat?.secondaryText?.text ?? "",
+        description: p.text?.text ?? "",
+      }));
+  } catch (error) {
+    throw toApiError(error);
   }
-
-  return (data?.predictions ?? []).map((p: any) => ({
-    placeId: p.place_id,
-    primaryText: p.structured_formatting?.main_text ?? p.description,
-    secondaryText: p.structured_formatting?.secondary_text ?? "",
-    description: p.description,
-  }));
 };
 
-/** Resolve a suggestion (place id) into coordinates + a full formatted address. */
+// ── place details ───────────────────────────────────────────────────────────
+
+/** Resolve a suggestion (place id) into coordinates + a formatted address. */
 export const getPlaceDetails = async (
   placeId: string,
+  signal?: AbortSignal,
 ): Promise<LocationValue> => {
-  const { data } = await placesApi.get("/place/details/json", {
-    params: {
-      place_id: placeId,
-      key: Config.googleMapsKey,
-      sessiontoken: sessionToken || newSessionToken(),
-      fields: "geometry,formatted_address,name",
-      language: "en",
-    },
-  });
+  try {
+    if (!Config.placesDirectMode) {
+      const { data } = await api.get<LocationValue>(
+        `${Config.placesProxyPath}/details`,
+        { signal, params: { placeId } },
+      );
+      return data;
+    }
 
-  if (data?.status !== "OK") {
-    throw new Error(data?.error_message || data?.status || "Place details failed");
+    assertDirectModeIsSafe();
+
+    const { data } = await google.get(
+      `${PLACES_NEW_BASE}/places/${encodeURIComponent(placeId)}`,
+      {
+        signal,
+        headers: {
+          "X-Goog-Api-Key": Config.googleMapsKey,
+          "X-Goog-FieldMask": "location,formattedAddress,displayName",
+        },
+      },
+    );
+
+    return {
+      latitude: data?.location?.latitude ?? 0,
+      longitude: data?.location?.longitude ?? 0,
+      address: data?.formattedAddress ?? data?.displayName?.text ?? "",
+    };
+  } catch (error) {
+    throw toApiError(error);
   }
-
-  // A details call closes the autocomplete session — start a fresh one next time.
-  sessionToken = "";
-
-  const loc = data.result.geometry.location;
-  return {
-    latitude: loc.lat,
-    longitude: loc.lng,
-    address: data.result.formatted_address ?? data.result.name ?? "",
-  };
 };
 
-/** Forward-geocode a free-text address (fallback when only a string is known). */
+// ── geocoding ───────────────────────────────────────────────────────────────
+
+/** Pull the first matching component (by type) out of a geocode result. */
+const pickComponent = (
+  components: { types?: string[]; long_name?: string }[] | undefined,
+  type: string,
+): string | undefined => components?.find((c) => c.types?.includes(type))?.long_name;
+
+/** Forward-geocode a free-text address. Returns null when nothing matches. */
 export const geocodeAddress = async (
   address: string,
+  signal?: AbortSignal,
 ): Promise<LocationValue | null> => {
   const query = address.trim();
   if (!query) return null;
 
-  const { data } = await placesApi.get("/geocode/json", {
-    params: { address: query, key: Config.googleMapsKey, language: "en" },
-  });
+  try {
+    if (!Config.placesDirectMode) {
+      const { data } = await api.get<LocationValue | null>(
+        `${Config.placesProxyPath}/geocode`,
+        { signal, params: { address: query } },
+      );
+      return data ?? null;
+    }
 
-  if (data?.status !== "OK" || !data.results?.length) return null;
+    assertDirectModeIsSafe();
 
-  const best = data.results[0];
-  const loc = best.geometry.location;
-  return {
-    latitude: loc.lat,
-    longitude: loc.lng,
-    address: best.formatted_address ?? query,
-  };
+    const { data } = await google.get(`${GEOCODE_BASE}/json`, {
+      signal,
+      params: { address: query, key: Config.googleMapsKey, language: "en" },
+    });
+
+    if (data?.status !== "OK" || !data.results?.length) return null;
+
+    const best = data.results[0];
+    return {
+      latitude: best.geometry.location.lat,
+      longitude: best.geometry.location.lng,
+      address: best.formatted_address ?? query,
+    };
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
-
-/** A reverse-geocoded location enriched with header-friendly labels. */
-export interface ReverseGeocodeResult extends LocationValue {
-  /** City / locality, e.g. "Yaoundé". */
-  city?: string;
-  /** Country name, e.g. "Cameroon". */
-  country?: string;
-  /** Compact label for headers, e.g. "Yaoundé, Cameroon". */
-  shortLabel: string;
-}
-
-/** Pull the first matching component (by type) out of a geocode result. */
-const pickComponent = (components: any[], type: string): string | undefined =>
-  components?.find((c) => c.types?.includes(type))?.long_name;
 
 /** Reverse-geocode raw GPS coordinates into a human-readable address. */
 export const reverseGeocode = async (
   latitude: number,
   longitude: number,
+  signal?: AbortSignal,
 ): Promise<ReverseGeocodeResult> => {
-  const { data } = await placesApi.get("/geocode/json", {
-    params: {
-      latlng: `${latitude},${longitude}`,
-      key: Config.googleMapsKey,
-      language: "en",
-    },
-  });
-
-  const best =
-    data?.status === "OK" && data.results?.length ? data.results[0] : null;
-  const address = best?.formatted_address ?? "Current location";
-
-  const components = best?.address_components ?? [];
-  const city =
-    pickComponent(components, "locality") ??
-    pickComponent(components, "administrative_area_level_2") ??
-    pickComponent(components, "administrative_area_level_1");
-  const country = pickComponent(components, "country");
-
-  const shortLabel = city
-    ? country
-      ? `${city}, ${country}`
-      : city
-    : address;
-
-  return { latitude, longitude, address, city, country, shortLabel };
-};
-
-/**
- * Fetch a drivable route between two points and return the decoded polyline
- * (used for the BlaBlaCar-style path on the map).
- */
-export const getDirections = async (
-  origin: LocationValue,
-  destination: LocationValue,
-): Promise<RouteResult> => {
-  const { data } = await placesApi.get("/directions/json", {
-    params: {
-      origin: `${origin.latitude},${origin.longitude}`,
-      destination: `${destination.latitude},${destination.longitude}`,
-      key: Config.googleMapsKey,
-      mode: "driving",
-      language: "en",
-    },
-  });
-
-  if (data?.status !== "OK" || !data.routes?.length) {
-    throw new Error(data?.error_message || data?.status || "Directions failed");
-  }
-
-  const route = data.routes[0];
-  const leg = route.legs?.[0];
-  return {
-    coordinates: decodePolyline(route.overview_polyline.points),
-    distanceText: leg?.distance?.text,
-    durationText: leg?.duration?.text,
+  const fallback: ReverseGeocodeResult = {
+    latitude,
+    longitude,
+    address: "Current location",
+    shortLabel: "Current location",
   };
-};
 
-/**
- * Fetch every drivable alternative between two points, sorted fastest-first.
- * Powers the route picker bottom sheet so the driver can compare and choose a
- * path. Falls back to a single straight geodesic option if the request fails.
- */
-export const getRouteAlternatives = async (
-  origin: LocationValue,
-  destination: LocationValue,
-): Promise<RouteOption[]> => {
-  const { data } = await placesApi.get("/directions/json", {
-    params: {
-      origin: `${origin.latitude},${origin.longitude}`,
-      destination: `${destination.latitude},${destination.longitude}`,
-      key: Config.googleMapsKey,
-      mode: "driving",
-      alternatives: true,
-      language: "en",
-    },
-  });
+  try {
+    if (!Config.placesDirectMode) {
+      const { data } = await api.get<ReverseGeocodeResult>(
+        `${Config.placesProxyPath}/reverse-geocode`,
+        { signal, params: { lat: latitude, lng: longitude } },
+      );
+      return data ?? fallback;
+    }
 
-  if (data?.status !== "OK" || !data.routes?.length) {
-    throw new Error(data?.error_message || data?.status || "Directions failed");
-  }
+    assertDirectModeIsSafe();
 
-  const options: RouteOption[] = data.routes.map((route: any, i: number) => {
-    const leg = route.legs?.[0];
-    const summary: string | undefined = route.summary;
-    // Split the summary ("N3 and N8", "A1/A2") into individual via roads.
-    const stops = summary
-      ? summary
-          .split(/\s+and\s+|\/|,/i)
-          .map((s: string) => s.trim())
-          .filter(Boolean)
-      : [];
+    const { data } = await google.get(`${GEOCODE_BASE}/json`, {
+      signal,
+      params: {
+        latlng: `${latitude},${longitude}`,
+        key: Config.googleMapsKey,
+        language: "en",
+      },
+    });
+
+    const best =
+      data?.status === "OK" && data.results?.length ? data.results[0] : null;
+    if (!best) return fallback;
+
+    const components = best.address_components ?? [];
+    const city =
+      pickComponent(components, "locality") ??
+      pickComponent(components, "administrative_area_level_2") ??
+      pickComponent(components, "administrative_area_level_1");
+    const country = pickComponent(components, "country");
+    const address = best.formatted_address ?? fallback.address;
+
     return {
-      id: `route-${i}`,
-      coordinates: decodePolyline(route.overview_polyline.points),
-      distanceText: leg?.distance?.text,
-      durationText: leg?.duration?.text,
-      distanceValue: leg?.distance?.value ?? 0,
-      durationValue: leg?.duration?.value ?? 0,
-      summary,
-      stops,
+      latitude,
+      longitude,
+      address,
+      city,
+      country,
+      shortLabel: city ? (country ? `${city}, ${country}` : city) : address,
     };
-  });
-
-  return options.sort((a, b) => a.durationValue - b.durationValue);
-};
-
-/** Decode a Google "encoded polyline" string into lat/lng coordinates. */
-export const decodePolyline = (encoded: string): LocationValue[] => {
-  const points: LocationValue[] = [];
-  let index = 0;
-  let lat = 0;
-  let lng = 0;
-
-  while (index < encoded.length) {
-    let result = 1;
-    let shift = 0;
-    let b: number;
-    do {
-      b = encoded.charCodeAt(index++) - 63 - 1;
-      result += b << shift;
-      shift += 5;
-    } while (b >= 0x1f);
-    lat += result & 1 ? ~(result >> 1) : result >> 1;
-
-    result = 1;
-    shift = 0;
-    do {
-      b = encoded.charCodeAt(index++) - 63 - 1;
-      result += b << shift;
-      shift += 5;
-    } while (b >= 0x1f);
-    lng += result & 1 ? ~(result >> 1) : result >> 1;
-
-    points.push({ latitude: lat * 1e-5, longitude: lng * 1e-5, address: "" });
+  } catch (error) {
+    throw toApiError(error);
   }
-
-  return points;
 };

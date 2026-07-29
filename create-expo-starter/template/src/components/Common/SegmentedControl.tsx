@@ -1,13 +1,7 @@
 import React from "react";
-import {
-  Pressable,
-  StyleSheet,
-  View,
-  StyleProp,
-  ViewStyle,
-} from "react-native";
+import { Pressable, View, StyleProp, ViewStyle } from "react-native";
 import { moderateScale } from "react-native-size-matters";
-import { SPACING, THEME } from "../../theme";
+import { SPACING, makeStyles, useTheme } from "@/theme";
 import RNText from "../Text/RNText";
 
 export interface SegmentedTab {
@@ -30,6 +24,9 @@ const SegmentedControl: React.FC<SegmentedControlProps> = ({
   style,
   variant = "pill",
 }) => {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
   if (variant === "underline") {
     return (
       <View style={[styles.underlineContainer, style]}>
@@ -44,14 +41,14 @@ const SegmentedControl: React.FC<SegmentedControlProps> = ({
               <RNText
                 font={active ? "semibold" : "regular"}
                 size={14}
-                color={active ? THEME.primary : THEME.textSecondary}
+                color={active ? colors.primary : colors.textSecondary}
               >
                 {t.label}
               </RNText>
               <View
                 style={[
                   styles.underline,
-                  { backgroundColor: active ? THEME.primary : "transparent" },
+                  { backgroundColor: active ? colors.primary : "transparent" },
                 ]}
               />
             </Pressable>
@@ -72,14 +69,14 @@ const SegmentedControl: React.FC<SegmentedControlProps> = ({
             style={[
               styles.pill,
               {
-                backgroundColor: active ? THEME.primary : "transparent",
+                backgroundColor: active ? colors.primary : "transparent",
               },
             ]}
           >
             <RNText
               font={active ? "semibold" : "medium"}
               size={13}
-              color={active ? THEME.textOnPrimary : THEME.textSecondary}
+              color={active ? colors.textOnPrimary : colors.textSecondary}
             >
               {t.label}
             </RNText>
@@ -92,10 +89,10 @@ const SegmentedControl: React.FC<SegmentedControlProps> = ({
 
 export default SegmentedControl;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   container: {
     flexDirection: "row",
-    backgroundColor: THEME.surface,
+    backgroundColor: c.surface,
     borderRadius: SPACING.radiusPill,
     gap: moderateScale(4),
     padding: moderateScale(4),
@@ -110,7 +107,7 @@ const styles = StyleSheet.create({
   underlineContainer: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: THEME.border,
+    borderBottomColor: c.border,
   },
   underlineTab: {
     flex: 1,
@@ -123,4 +120,4 @@ const styles = StyleSheet.create({
     width: "60%",
     borderRadius: moderateScale(2),
   },
-});
+}));

@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { moderateScale } from "react-native-size-matters";
-import { SPACING, THEME } from "../../theme";
+import { SPACING, useTheme, type ThemeColors } from "@/theme";
 import RNText from "../Text/RNText";
 
 export type StatusTone = "success" | "warning" | "danger" | "info" | "primary";
@@ -12,20 +12,24 @@ interface StatusBadgeProps {
   dot?: boolean;
 }
 
-const PALETTE: Record<StatusTone, { bg: string; fg: string }> = {
-  success: { bg: THEME.successLight, fg: THEME.success },
-  warning: { bg: THEME.warningLight, fg: THEME.warning },
-  danger: { bg: THEME.dangerLight, fg: THEME.danger },
-  info: { bg: "#E6F0FF", fg: THEME.info },
-  primary: { bg: THEME.primaryFaint, fg: THEME.primary },
-};
+// Built from the active palette rather than declared at module scope, so the
+// badge follows the theme instead of freezing the light colours at import time.
+const tonePalette = (c: ThemeColors): Record<StatusTone, { bg: string; fg: string }> => ({
+  success: { bg: c.successLight, fg: c.success },
+  warning: { bg: c.warningLight, fg: c.warning },
+  danger: { bg: c.dangerLight, fg: c.danger },
+  info: { bg: c.infoLight, fg: c.info },
+  primary: { bg: c.primaryFaint, fg: c.primary },
+});
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({
   label,
   tone = "success",
   dot,
 }) => {
-  const p = PALETTE[tone];
+  const { colors } = useTheme();
+  const p = tonePalette(colors)[tone];
+
   return (
     <View style={[styles.badge, { backgroundColor: p.bg }]}>
       {dot ? <View style={[styles.dot, { backgroundColor: p.fg }]} /> : null}

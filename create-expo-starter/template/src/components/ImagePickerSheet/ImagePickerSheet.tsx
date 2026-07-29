@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { moderateScale } from "react-native-size-matters";
 import { CameraIcon, GalleryIcon } from "../Icon/SvgIcons";
-import { SPACING, THEME } from "../../theme";
-import { showToast } from "../../utils/functions";
-import { useLanguage } from "../../localization";
+import { SPACING, makeStyles, useTheme } from "@/theme";
+import { showToast } from "@/utils/functions";
+import { useLanguage } from "@/localization";
 import BottomSheet from "../BottomSheet/BottomSheet";
 import RNText from "../Text/RNText";
 
@@ -49,6 +49,8 @@ const ImagePickerSheet: React.FC<ImagePickerSheetProps> = ({
 }) => {
   const { t } = useLanguage();
   const [busy, setBusy] = useState<"camera" | "gallery" | null>(null);
+  const styles = useStyles();
+  const { colors } = useTheme();
 
   const titleText = title ?? t("imagePicker.updatePhoto");
   const subtitleText = subtitle ?? t("imagePicker.subtitle");
@@ -116,17 +118,17 @@ const ImagePickerSheet: React.FC<ImagePickerSheetProps> = ({
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <RNText font="semibold" size={18} color={THEME.text}>
+      <RNText font="semibold" size={18} color={colors.text}>
         {titleText}
       </RNText>
-      <RNText size={12} color={THEME.textMuted} style={styles.subtitle}>
+      <RNText size={12} color={colors.textMuted} style={styles.subtitle}>
         {subtitleText}
       </RNText>
 
       <View style={styles.card}>
         <Row
           icon={
-            <CameraIcon size={moderateScale(20)} color={THEME.primary} />
+            <CameraIcon size={moderateScale(20)} color={colors.primary} />
           }
           label={t("imagePicker.openCamera")}
           caption={t("imagePicker.openCameraCaption")}
@@ -136,7 +138,7 @@ const ImagePickerSheet: React.FC<ImagePickerSheetProps> = ({
         <View style={styles.divider} />
         <Row
           icon={
-            <GalleryIcon size={moderateScale(20)} color={THEME.primary} />
+            <GalleryIcon size={moderateScale(20)} color={colors.primary} />
           }
           label={t("imagePicker.chooseFromGallery")}
           caption={t("imagePicker.galleryCaption")}
@@ -145,8 +147,12 @@ const ImagePickerSheet: React.FC<ImagePickerSheetProps> = ({
         />
       </View>
 
-      <Pressable onPress={onClose} style={styles.cancel}>
-        <RNText font="semibold" size={15} color={THEME.text}>
+      <Pressable
+        onPress={onClose}
+        accessibilityRole="button"
+        style={styles.cancel}
+      >
+        <RNText font="semibold" size={15} color={colors.text}>
           {t("common.cancel")}
         </RNText>
       </Pressable>
@@ -166,30 +172,39 @@ const Row = ({
   caption: string;
   onPress: () => void;
   disabled?: boolean;
-}) => (
-  <Pressable
-    onPress={onPress}
-    disabled={disabled}
-    style={[styles.row, disabled && styles.rowDisabled]}
-  >
-    <View style={styles.iconBubble}>{icon}</View>
-    <View style={styles.rowBody}>
-      <RNText font="semibold" size={14} color={THEME.text}>
-        {label}
-      </RNText>
-      <RNText size={11} color={THEME.textMuted} style={styles.caption}>
-        {caption}
-      </RNText>
-    </View>
-  </Pressable>
-);
+}) => {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={caption}
+      accessibilityState={{ disabled: Boolean(disabled) }}
+      style={[styles.row, disabled && styles.rowDisabled]}
+    >
+      <View style={styles.iconBubble}>{icon}</View>
+      <View style={styles.rowBody}>
+        <RNText font="semibold" size={14} color={colors.text}>
+          {label}
+        </RNText>
+        <RNText size={11} color={colors.textMuted} style={styles.caption}>
+          {caption}
+        </RNText>
+      </View>
+    </Pressable>
+  );
+};
 
 export default ImagePickerSheet;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   subtitle: { marginTop: moderateScale(4), marginBottom: SPACING.lg },
   card: {
-    backgroundColor: THEME.backgroundAlt,
+    backgroundColor: c.backgroundAlt,
     borderRadius: SPACING.radiusLg,
     padding: moderateScale(6),
   },
@@ -206,7 +221,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: THEME.divider,
+    backgroundColor: c.divider,
     marginHorizontal: moderateScale(10),
   },
   rowBody: {
@@ -219,7 +234,7 @@ const styles = StyleSheet.create({
     width: moderateScale(40),
     height: moderateScale(40),
     borderRadius: moderateScale(12),
-    backgroundColor: THEME.primaryFaint,
+    backgroundColor: c.primaryFaint,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -227,8 +242,8 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     height: moderateScale(52),
     borderRadius: SPACING.radiusPill,
-    backgroundColor: THEME.surfaceMuted,
+    backgroundColor: c.surfaceMuted,
     alignItems: "center",
     justifyContent: "center",
   },
-});
+}));

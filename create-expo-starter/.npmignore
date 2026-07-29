@@ -1,9 +1,0 @@
-# Whitelisting is handled by the "files" field in package.json.
-# This file only guards against accidental local cruft.
-template/node_modules
-template/.expo
-template/ios
-template/android
-template/dist
-.DS_Store
-*.log

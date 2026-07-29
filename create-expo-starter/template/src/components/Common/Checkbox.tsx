@@ -1,7 +1,7 @@
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { moderateScale } from "react-native-size-matters";
-import { THEME } from "../../theme";
+import { useTheme } from "@/theme";
 import { CheckIcon } from "../Icon/SvgIcons";
 import RNText from "../Text/RNText";
 
@@ -10,6 +10,8 @@ interface CheckboxProps {
   onChange: (v: boolean) => void;
   label?: string;
   shape?: "square" | "circle";
+  /** Falls back to `label` when omitted. */
+  accessibilityLabel?: string;
 }
 
 const Checkbox: React.FC<CheckboxProps> = ({
@@ -17,33 +19,41 @@ const Checkbox: React.FC<CheckboxProps> = ({
   onChange,
   label,
   shape = "circle",
-}) => (
-  <Pressable
-    onPress={() => onChange(!value)}
-    style={styles.row}
-    hitSlop={8}
-  >
-    <View
-      style={[
-        styles.box,
-        shape === "circle" && styles.boxCircle,
-        {
-          backgroundColor: value ? THEME.primary : THEME.surface,
-          borderColor: value ? THEME.primary : THEME.inputBorder,
-        },
-      ]}
+  accessibilityLabel,
+}) => {
+  const { colors } = useTheme();
+
+  return (
+    <Pressable
+      onPress={() => onChange(!value)}
+      style={styles.row}
+      hitSlop={8}
+      accessibilityRole="checkbox"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ checked: value }}
     >
-      {value ? (
-        <CheckIcon size={moderateScale(12)} color={THEME.textOnPrimary} />
+      <View
+        style={[
+          styles.box,
+          shape === "circle" && styles.boxCircle,
+          {
+            backgroundColor: value ? colors.primary : colors.surface,
+            borderColor: value ? colors.primary : colors.inputBorder,
+          },
+        ]}
+      >
+        {value ? (
+          <CheckIcon size={moderateScale(12)} color={colors.textOnPrimary} />
+        ) : null}
+      </View>
+      {label ? (
+        <RNText size={13} color={colors.textSecondary}>
+          {label}
+        </RNText>
       ) : null}
-    </View>
-    {label ? (
-      <RNText size={13} color={THEME.textSecondary}>
-        {label}
-      </RNText>
-    ) : null}
-  </Pressable>
-);
+    </Pressable>
+  );
+};
 
 export default Checkbox;
 

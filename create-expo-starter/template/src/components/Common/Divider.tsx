@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
-import { THEME } from "../../theme";
+import { useTheme } from "@/theme";
 
 interface DividerProps {
   color?: string;
@@ -10,20 +10,26 @@ interface DividerProps {
 }
 
 const Divider: React.FC<DividerProps> = ({
-  color = THEME.divider,
+  color,
   thickness = 1,
   style,
   vertical,
-}) => (
-  <View
-    style={[
-      vertical ? styles.vertical : styles.horizontal,
-      vertical ? { width: thickness } : { height: thickness },
-      { backgroundColor: color },
-      style,
-    ]}
-  />
-);
+}) => {
+  const { colors } = useTheme();
+
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[
+        vertical ? styles.vertical : styles.horizontal,
+        vertical ? { width: thickness } : { height: thickness },
+        { backgroundColor: color ?? colors.divider },
+        style,
+      ]}
+    />
+  );
+};
 
 export default Divider;
 

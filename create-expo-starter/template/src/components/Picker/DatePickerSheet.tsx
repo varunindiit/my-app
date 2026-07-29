@@ -1,19 +1,17 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable, TouchableOpacity, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
   LinearTransition,
 } from "react-native-reanimated";
 import { moderateScale } from "react-native-size-matters";
-import { SPACING, THEME } from "../../theme";
-import { useLanguage } from "../../localization";
+import { SPACING, makeStyles, useTheme } from "@/theme";
+import { useLanguage } from "@/localization";
 import BottomSheet from "../BottomSheet/BottomSheet";
-import { RNButton, RNText } from "../index";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "../Icon/SvgIcons";
+import RNButton from "../Button/RNButton";
+import RNText from "../Text/RNText";
+import { ChevronLeftIcon, ChevronRightIcon } from "../Icon/SvgIcons";
 
 interface DatePickerSheetProps {
   visible: boolean;
@@ -79,6 +77,8 @@ const DatePickerSheet: React.FC<DatePickerSheetProps> = ({
   title,
 }) => {
   const { t } = useLanguage();
+  const styles = useStyles();
+  const { colors } = useTheme();
   const titleText = title ?? t("common.selectDate");
   const today = useMemo(() => startOfDay(new Date()), []);
   const minDate = useMemo(
@@ -167,7 +167,7 @@ const DatePickerSheet: React.FC<DatePickerSheetProps> = ({
   return (
     <BottomSheet visible={visible} onClose={onClose} contentStyle={styles.sheet}>
       <View style={styles.header}>
-        <RNText font="semibold" size={18} color={THEME.text}>
+        <RNText font="semibold" size={18} color={colors.text}>
           {titleText}
         </RNText>
       </View>
@@ -195,7 +195,7 @@ const DatePickerSheet: React.FC<DatePickerSheetProps> = ({
         >
           <ChevronLeftIcon
             size={moderateScale(16)}
-            color={canGoPrev ? THEME.primary : THEME.textPlaceholder}
+            color={canGoPrev ? colors.primary : colors.textPlaceholder}
           />
         </TouchableOpacity>
         <Animated.View
@@ -203,7 +203,7 @@ const DatePickerSheet: React.FC<DatePickerSheetProps> = ({
           entering={FadeIn.duration(180)}
           exiting={FadeOut.duration(120)}
         >
-          <RNText font="semibold" size={16} color={THEME.text}>
+          <RNText font="semibold" size={16} color={colors.text}>
             {MONTH_NAMES[viewMonth]} {viewYear}
           </RNText>
         </Animated.View>
@@ -216,7 +216,7 @@ const DatePickerSheet: React.FC<DatePickerSheetProps> = ({
         >
           <ChevronRightIcon
             size={moderateScale(16)}
-            color={canGoNext ? THEME.primary : THEME.textPlaceholder}
+            color={canGoNext ? colors.primary : colors.textPlaceholder}
           />
         </TouchableOpacity>
       </View>
@@ -224,7 +224,7 @@ const DatePickerSheet: React.FC<DatePickerSheetProps> = ({
       <View style={styles.weekRow}>
         {WEEKDAY_LABELS.map((d, idx) => (
           <View key={idx} style={styles.weekCell}>
-            <RNText size={11} font="medium" color={THEME.textMuted}>
+            <RNText size={11} font="medium" color={colors.textMuted}>
               {d}
             </RNText>
           </View>
@@ -259,15 +259,15 @@ const DatePickerSheet: React.FC<DatePickerSheetProps> = ({
               >
                 <RNText
                   size={14}
-                  font={isSelected ? "semibold" : isToday ? "semibold" : "regular"}
+                  font={isSelected || isToday ? "semibold" : "regular"}
                   color={
                     disabled
-                      ? THEME.textPlaceholder
+                      ? colors.textPlaceholder
                       : isSelected
-                      ? THEME.textOnPrimary
-                      : isToday
-                      ? THEME.primary
-                      : THEME.text
+                        ? colors.textOnPrimary
+                        : isToday
+                          ? colors.primary
+                          : colors.text
                   }
                 >
                   {date.getDate()}
@@ -295,25 +295,32 @@ const QuickChip = ({
   label: string;
   active: boolean;
   onPress: () => void;
-}) => (
-  <TouchableOpacity
-    onPress={onPress}
-    activeOpacity={0.8}
-    style={[styles.chip, active && styles.chipActive]}
-  >
-    <RNText
-      size={13}
-      font="medium"
-      color={active ? THEME.textOnPrimary : THEME.text}
+}) => {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      style={[styles.chip, active && styles.chipActive]}
     >
-      {label}
-    </RNText>
-  </TouchableOpacity>
-);
+      <RNText
+        size={13}
+        font="medium"
+        color={active ? colors.textOnPrimary : colors.text}
+      >
+        {label}
+      </RNText>
+    </TouchableOpacity>
+  );
+};
 
 export default DatePickerSheet;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   sheet: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xl,
@@ -331,13 +338,13 @@ const styles = StyleSheet.create({
     paddingVertical: moderateScale(8),
     paddingHorizontal: moderateScale(16),
     borderRadius: moderateScale(20),
-    backgroundColor: THEME.primaryFaint,
+    backgroundColor: c.primaryFaint,
     borderWidth: 1,
-    borderColor: THEME.primaryLight,
+    borderColor: c.primaryLight,
   },
   chipActive: {
-    backgroundColor: THEME.primary,
-    borderColor: THEME.primary,
+    backgroundColor: c.primary,
+    borderColor: c.primary,
   },
   monthRow: {
     flexDirection: "row",
@@ -350,12 +357,12 @@ const styles = StyleSheet.create({
     width: moderateScale(34),
     height: moderateScale(34),
     borderRadius: moderateScale(17),
-    backgroundColor: THEME.primaryFaint,
+    backgroundColor: c.primaryFaint,
     alignItems: "center",
     justifyContent: "center",
   },
   navBtnDisabled: {
-    backgroundColor: THEME.surfaceMuted,
+    backgroundColor: c.surfaceMuted,
   },
   weekRow: {
     flexDirection: "row",
@@ -382,16 +389,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dayBtnSelected: {
-    backgroundColor: THEME.primary,
+    backgroundColor: c.primary,
   },
   dayBtnToday: {
     borderWidth: 1.2,
-    borderColor: THEME.primary,
+    borderColor: c.primary,
   },
   dayBtnPressed: {
-    backgroundColor: THEME.primaryFaint,
+    backgroundColor: c.primaryFaint,
   },
   confirmBtn: {
     marginTop: moderateScale(16),
   },
-});
+}));

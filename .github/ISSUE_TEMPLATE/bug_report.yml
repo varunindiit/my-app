@@ -1,0 +1,78 @@
+name: Bug report
+description: Something in the CLI or the scaffolded app doesn't work
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The environment fields below are what make a
+        scaffolding bug reproducible — please fill them in.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does the problem occur?
+      options:
+        - The CLI (scaffolding fails or produces the wrong output)
+        - The generated app (build, runtime or type errors)
+        - Documentation
+    validations:
+      required: true
+
+  - type: input
+    id: cli-version
+    attributes:
+      label: CLI version
+      description: "`npx @varunindiit/create-expo-starter --version`"
+      placeholder: "2.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node version
+      description: "`node --version` (the CLI requires >= 20.19.0)"
+      placeholder: "v22.11.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Linux, Windows, Other]
+    validations:
+      required: true
+
+  - type: input
+    id: command
+    attributes:
+      label: Exact command you ran
+      placeholder: "npx @varunindiit/create-expo-starter my-app --preset full"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+      description: Paste the full output or error, including the stack trace.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: >
+        For scaffolding issues, the output of the same command with `--dry-run`
+        is often enough to diagnose it.
